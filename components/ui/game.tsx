@@ -254,8 +254,8 @@ type Particle = {
   createdAt: number;
 };
 
-const GAME_WIDTH = 800;
-const GAME_HEIGHT = 600;
+// const GAME_WIDTH = 800;
+// const GAME_HEIGHT = 600;
 const PLAYER_SIZE = 40;
 const BASE_ENEMY_SIZE = 30;
 const BASE_PLAYER_SPEED = 4;
@@ -407,9 +407,9 @@ export default function CosmicChickenRhapsody() {
   const [enemies, setEnemies] = useState<Enemy[]>([]);
   const [powerUps, setPowerUps] = useState<PowerUp[]>([]);
   const [activePowerUps, setActivePowerUps] = useState<ActivePowerUp[]>([]);
-  const [lastMessage, setLastMessage] = useState(
-    "Welcome to the Cosmic Arena!"
-  );
+  // const [lastMessage, setLastMessage] = useState(
+  //   "Welcome to the Cosmic Arena!"
+  // );
   const [isAttacking, setIsAttacking] = useState(false);
   const [particles, setParticles] = useState<Particle[]>([]);
   const [isInvulnerable, setIsInvulnerable] = useState(false);
@@ -447,7 +447,7 @@ export default function CosmicChickenRhapsody() {
 
         const gameAreaRect = gameAreaRef.current.getBoundingClientRect();
         const canvasRect =
-          particleSystemRef.current.gl.canvas.getBoundingClientRect();
+          gameAreaRef.current.gl.canvas.getBoundingClientRect();
 
         // Convert game area coordinates to canvas coordinates
         const canvasX =
@@ -587,15 +587,13 @@ export default function CosmicChickenRhapsody() {
             ...prev,
             stars: prev.stars - powerUpConfig.cost,
           }));
-          setLastMessage(`Activated ${powerUpConfig.name}!`);
+          // setLastMessage(`Activated ${powerUpConfig.name}!`);
           createParticles(
             playerState.position.x,
             playerState.position.y,
             powerUpConfig.color,
             20
           );
-        } else {
-          setLastMessage(`Not enough stars to activate ${powerUpConfig.name}!`);
         }
       }
     },
@@ -760,7 +758,7 @@ export default function CosmicChickenRhapsody() {
       rotation: 0,
       velocity: { x: 0, y: 0 },
     });
-    setLastMessage("Welcome back to the Cosmic Arena!");
+    // setLastMessage("Welcome back to the Cosmic Arena!");
     setGameStarted(true);
   };
 
@@ -937,14 +935,14 @@ export default function CosmicChickenRhapsody() {
               ...prev,
               hearts: Math.min(prev.hearts + 1, 5),
             }));
-            setLastMessage("Extra heart collected!");
+            // setLastMessage("Extra heart collected!");
             createParticles(powerUp.position.x, powerUp.position.y, "red", 10);
           } else if (powerUp.type === "STAR") {
             setGameState((prev) => ({
               ...prev,
               stars: prev.stars + 10,
             }));
-            setLastMessage("10 stars collected!");
+            // setLastMessage("10 stars collected!");
             createParticles(
               powerUp.position.x,
               powerUp.position.y,
