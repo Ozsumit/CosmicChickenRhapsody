@@ -206,6 +206,15 @@ class ParticleSystem {
     this.gl.drawArrays(this.gl.POINTS, 0, this.particleCount);
   }
 }
+// type BossType = "LaserChicken" | "EggThrower" | "FeatherStorm";
+
+interface Obstacle {
+  id: number;
+  position: { x: number; y: number };
+  size: number;
+  type: "Rock" | "Asteroid" | "SpaceJunk";
+}
+
 type AttackType = "NORMAL" | "FEATHER_FURY" | "CLUCKINATOR";
 const getAttackDamage = (baseAttackDamage: number, wave: number) => {
   return Math.round(baseAttackDamage * Math.pow(1.12, wave));
@@ -252,6 +261,7 @@ type Particle = {
   color: string;
   size: number;
   createdAt: number;
+  lifetime: number;
 };
 
 // const GAME_WIDTH = 800;
@@ -287,11 +297,15 @@ type Projectile = {
   position: { x: number; y: number };
   velocity: { x: number; y: number };
   size: number;
+  source: "player" | "boss"; // Add this to track who fired the projectile
 };
+
 export default function CosmicChickenRhapsody() {
-  const [highestWave, setHighestWave] = useState(0);
-  const [isPaused, setIsPaused] = useState(false);
   const [projectiles, setProjectiles] = useState<Projectile[]>([]);
+  const [canShootProjectile, setCanShootProjectile] = useState(true);
+  const [projectileReloadProgress, setProjectileReloadProgress] = useState(500);
+  const [isPaused, setIsPaused] = useState(false);
+  // const [projectiles, setProjectiles] = useState<Projectile[]>([]);
   const [highScore, setHighScore] = useState(0); // Initialize with default value
   const [tutorialShown, setTutorialShown] = useState(false);
 
@@ -309,7 +323,40 @@ export default function CosmicChickenRhapsody() {
       type: "HEART" | "STAR";
     }>
   >([]);
+  useEffect(() => {
+    // Read values from localStorage only on client-side
+    const savedHighScore = parseInt(
+      localStorage.getItem("highScore") || "0",
+      10
+    );
+    const savedTutorialShown = localStorage.getItem("tutorialShown") === "true";
 
+    setHighScore(savedHighScore);
+    setTutorialShown(savedTutorialShown);
+  }, []);
+  // const [bosses, setBosses] = useState<Boss[]>([]);
+  const [obstacles, setObstacles] = useState<Obstacle[]>([]);
+  // const [terrain, setTerrain] = useState<TerrainChunk[]>([]);
+
+  // Function to generate obstacles
+  const generateObstacles = (count: number): Obstacle[] => {
+    const obstacles: Obstacle[] = [];
+    const obstacleTypes = ["Rock", "Asteroid", "SpaceJunk"];
+    for (let i = 0; i < count; i++) {
+      obstacles.push({
+        id: Date.now() + i,
+        position: {
+          x: Math.random() * GAME_WIDTH,
+          y: Math.random() * GAME_HEIGHT,
+        },
+        size: 20 + Math.random() * 30,
+        type: obstacleTypes[
+          Math.floor(Math.random() * obstacleTypes.length)
+        ] as Obstacle["type"],
+      });
+    }
+    return obstacles;
+  };
   const [showTutorial, setShowTutorial] = useState(true);
   const [gameStarted, setGameStarted] = useState(false);
   const getGameDimensions = useCallback(() => {
@@ -322,6 +369,27 @@ export default function CosmicChickenRhapsody() {
     }
     return { width: 800, height: 600 }; // Fallback dimensions
   }, []);
+  const findClosestEnemy = useCallback(
+    (playerPosition: { x: number; y: number }, enemies: Enemy[]) => {
+      return enemies.reduce(
+        (closest, enemy) => {
+          const dx = enemy.position.x - playerPosition.x;
+          const dy = enemy.position.y - playerPosition.y;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+
+          if (distance < closest.distance) {
+            return { enemy, distance };
+          }
+          return closest;
+        },
+        { enemy: null, distance: Infinity } as {
+          enemy: Enemy | null;
+          distance: number;
+        }
+      );
+    },
+    []
+  );
   useEffect(() => {
     if (canvasRef.current && containerRef.current) {
       const canvas = canvasRef.current;
@@ -389,7 +457,7 @@ export default function CosmicChickenRhapsody() {
   const GAME_HEIGHT = gameDimensions.height;
   const [gameState, setGameState] = useState({
     score: 0,
-    wave: 0,
+    wave: 5,
     hearts: 3,
     gameOver: false,
     combo: 1,
@@ -420,7 +488,7 @@ export default function CosmicChickenRhapsody() {
 
   const [canAttack, setCanAttack] = useState(true);
   const [attackCooldown, setAttackCooldown] = useState(0);
-  const ATTACK_COOLDOWN = 350; // 500ms cooldown between attacks
+  const ATTACK_COOLDOWN = 250; // 500ms cooldown between attacks
   // const [isPaused, setIsPaused] = useState(false);
 
   const createParticles = useCallback(
@@ -557,7 +625,69 @@ export default function CosmicChickenRhapsody() {
     activePowerUps,
     createParticles,
   ]);
+  const shootProjectile = useCallback(() => {
+    if (canShootProjectile && enemies.length > 0) {
+      const closestEnemy = findClosestEnemy(playerState.position, enemies);
 
+      if (closestEnemy.enemy) {
+        const dx = closestEnemy.enemy.position.x - playerState.position.x;
+        const dy = closestEnemy.enemy.position.y - playerState.position.y;
+        const angle = Math.atan2(dy, dx);
+        const speed = 14;
+
+        const newProjectile: Projectile = {
+          id: Date.now(),
+          position: { ...playerState.position },
+          velocity: {
+            x: Math.cos(angle) * speed,
+            y: Math.sin(angle) * speed,
+          },
+          size: 7,
+          source: "player", // Mark as player projectile
+        };
+
+        setPlayerState((prev) => ({
+          ...prev,
+          rotation: angle,
+        }));
+        setProjectiles((prev) => [...prev, newProjectile]);
+        setCanShootProjectile(false);
+        setProjectileReloadProgress(0);
+        setIsInvulnerable(true);
+        setTimeout(() => setIsInvulnerable(false), 1000);
+        createParticles(
+          playerState.position.x,
+          playerState.position.y,
+          "yellow",
+          5,
+          2
+        );
+      }
+    }
+  }, [
+    canShootProjectile,
+    enemies,
+    playerState.position,
+    findClosestEnemy,
+    createParticles,
+  ]);
+
+  useEffect(() => {
+    if (!canShootProjectile) {
+      const reloadInterval = setInterval(() => {
+        setProjectileReloadProgress((prev) => {
+          if (prev >= 500) {
+            clearInterval(reloadInterval);
+            setCanShootProjectile(true);
+            return 500;
+          }
+          return prev + 1;
+        });
+      }, 50); // Update every 50ms for smooth progress
+
+      return () => clearInterval(reloadInterval);
+    }
+  }, [canShootProjectile]);
   const [bossActive, setBossActive] = useState(false);
   const activateSpecialPower = useCallback(
     (powerNumber: number) => {
@@ -619,7 +749,11 @@ export default function CosmicChickenRhapsody() {
 
     // Only spawn boss every 5 waves, starting from wave 5
     const shouldSpawnBoss = gameState.wave > 0 && gameState.wave % 5 === 0;
-
+    // Generate new obstacles every 3 waves
+    if (gameState.wave % 3 === 0) {
+      const newObstacles = generateObstacles(5);
+      setObstacles((prev) => [...prev, ...newObstacles]);
+    }
     if (shouldSpawnBoss) {
       setBossActive(true);
       setTimeout(() => setBossActive(false), 30000); // Boss fight lasts 30 seconds
@@ -669,28 +803,7 @@ export default function CosmicChickenRhapsody() {
     setGameState((prev) => ({ ...prev, wave: prev.wave + 1 }));
     spawnPowerUp();
   }, [gameState.wave, spawnPowerUp, GAME_HEIGHT, GAME_WIDTH]);
-  useEffect(() => {
-    // Read values from localStorage only on client-side
-    const savedHighScore = parseInt(
-      localStorage.getItem("highScore") || "0",
-      10
-    );
-    const savedHighestWave = parseInt(
-      localStorage.getItem("highestWave") || "0",
-      10
-    );
-    const savedTutorialShown = localStorage.getItem("tutorialShown") === "true";
 
-    setHighScore(savedHighScore);
-    setHighestWave(savedHighestWave);
-    setTutorialShown(savedTutorialShown);
-  }, []);
-  useEffect(() => {
-    if (gameState.wave > highestWave) {
-      setHighestWave(gameState.wave);
-      localStorage.setItem("highestWave", gameState.wave.toString());
-    }
-  }, [gameState.wave, highestWave]);
   useEffect(() => {
     const timer = setTimeout(() => {
       setPowerUpEffects((prev) =>
@@ -736,6 +849,7 @@ export default function CosmicChickenRhapsody() {
           y: Math.sin(angle) * speed,
         },
         size: 10,
+        source: "boss", // Mark as boss projectile
       };
       setProjectiles((prev) => [...prev, newProjectile]);
     },
@@ -787,6 +901,21 @@ export default function CosmicChickenRhapsody() {
       setHighScore(gameState.score);
       localStorage.setItem("highScore", gameState.score.toString());
     }
+    // const findClosestEnemy = () => {
+    //   return enemies.reduce(
+    //     (closest, enemy) => {
+    //       const dx = enemy.position.x - playerState.position.x;
+    //       const dy = enemy.position.y - playerState.position.y;
+    //       const distance = Math.sqrt(dx * dx + dy * dy);
+    //       if (distance < closest.distance) {
+    //         return { enemy, distance };
+    //       }
+    //       return closest;
+    //     },
+    //     { enemy: null, distance: Infinity } as { enemy: Enemy | null; distance: number }
+    //   );
+    // };
+
     const movePlayer = () => {
       const moveSpeed = activePowerUps.some((p) => p.type === "FEATHER_FURY")
         ? BASE_PLAYER_SPEED * 1.5
@@ -872,25 +1001,120 @@ export default function CosmicChickenRhapsody() {
           return prev - 16;
         });
       }
-
-      setEnemies((prev) =>
-        prev.map((enemy) => {
-          const dx = playerState.position.x - enemy.position.x;
-          const dy = playerState.position.y - enemy.position.y;
-          const distance = Math.sqrt(dx * dx + dy * dy);
-
-          const normalizedDx = dx / distance;
-          const normalizedDy = dy / distance;
-
-          return {
-            ...enemy,
+      setProjectiles((prev) =>
+        prev
+          .map((projectile) => ({
+            ...projectile,
             position: {
-              x: enemy.position.x + normalizedDx * enemy.speed,
-              y: enemy.position.y + normalizedDy * enemy.speed,
+              x: projectile.position.x + projectile.velocity.x,
+              y: projectile.position.y + projectile.velocity.y,
             },
-          };
-        })
+          }))
+          .filter(
+            (projectile) =>
+              projectile.position.x > 0 &&
+              projectile.position.x < GAME_WIDTH &&
+              projectile.position.y > 0 &&
+              projectile.position.y < GAME_HEIGHT
+          )
       );
+
+      // Check for projectile collisions with enemies
+      const hitProjectiles: number[] = [];
+      setEnemies(
+        (prevEnemies) =>
+          prevEnemies
+            .map((enemy) => {
+              const hitByProjectile = projectiles.find((projectile) => {
+                // Skip collision check if it's a boss projectile hitting the boss
+                if (enemy.type === "Boss" && projectile.source === "boss") {
+                  return false;
+                }
+
+                const dx = projectile.position.x - enemy.position.x;
+                const dy = projectile.position.y - enemy.position.y;
+                return (
+                  Math.sqrt(dx * dx + dy * dy) <
+                  (enemy.size + projectile.size) / 2
+                );
+              });
+
+              if (hitByProjectile) {
+                hitProjectiles.push(hitByProjectile.id);
+                const newHealth = enemy.health - ATTACK_DAMAGE.NORMAL;
+                if (newHealth <= 0) {
+                  createParticles(
+                    enemy.position.x,
+                    enemy.position.y,
+                    "red",
+                    20
+                  );
+                  setGameState((prev) => ({
+                    ...prev,
+                    score: prev.score + (enemy.type === "Boss" ? 1000 : 100),
+                    stars: prev.stars + (enemy.type === "Boss" ? 5 : 1),
+                  }));
+                  return null;
+                }
+                createParticles(
+                  enemy.position.x,
+                  enemy.position.y,
+                  "orange",
+                  10
+                );
+                return { ...enemy, health: newHealth };
+              }
+              return enemy;
+            })
+            .filter(Boolean) as Enemy[]
+      );
+      const playerHit = projectiles.some((projectile) => {
+        if (projectile.source === "player") return false; // Player's own projectiles can't hurt them
+
+        const dx = projectile.position.x - playerState.position.x;
+        const dy = projectile.position.y - playerState.position.y;
+        return (
+          Math.sqrt(dx * dx + dy * dy) < (PLAYER_SIZE + projectile.size) / 2
+        );
+      });
+
+      if (playerHit && !isInvulnerable) {
+        setGameState((prev) => ({
+          ...prev,
+          hearts: prev.hearts - 1,
+          gameOver: prev.hearts <= 1,
+        }));
+        createParticles(
+          playerState.position.x,
+          playerState.position.y,
+          "red",
+          20
+        );
+        setIsInvulnerable(true);
+        setTimeout(() => setIsInvulnerable(false), 1000);
+      }
+
+      // Check for collisions with obstacles
+      setPlayerState((prev) => {
+        let newPosition = { ...prev.position };
+        obstacles.forEach((obstacle) => {
+          const dx = newPosition.x - obstacle.position.x;
+          const dy = newPosition.y - obstacle.position.y;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+          if (distance < (PLAYER_SIZE + obstacle.size) / 2) {
+            const angle = Math.atan2(dy, dx);
+            newPosition = {
+              x:
+                obstacle.position.x +
+                Math.cos(angle) * ((PLAYER_SIZE + obstacle.size) / 2),
+              y:
+                obstacle.position.y +
+                Math.sin(angle) * ((PLAYER_SIZE + obstacle.size) / 2),
+            };
+          }
+        });
+        return { ...prev, position: newPosition };
+      });
 
       // Handle enemy collisions
       setEnemies((prev) => {
@@ -918,7 +1142,7 @@ export default function CosmicChickenRhapsody() {
                 4
               );
               setIsInvulnerable(true);
-              setTimeout(() => setIsInvulnerable(false), 1500);
+              setTimeout(() => setIsInvulnerable(false), 2000);
             } else {
               // Shield hit particles
               createParticles(
@@ -1002,21 +1226,35 @@ export default function CosmicChickenRhapsody() {
       const ATTACK_RANGE = activePowerUps.some((p) => p.type === "CLUCKINATOR")
         ? 160
         : 100;
-      const closestEnemy = enemies.reduce(
-        (closest, enemy) => {
-          const dx = enemy.position.x - playerState.position.x;
-          const dy = enemy.position.y - playerState.position.y;
-          const distance = Math.sqrt(dx * dx + dy * dy);
-          if (distance < closest.distance && distance <= ATTACK_RANGE) {
-            return { enemy, distance };
+
+      const findClosestEnemy = () => {
+        return enemies.reduce(
+          (closest, enemy) => {
+            const dx = enemy.position.x - playerState.position.x;
+            const dy = enemy.position.y - playerState.position.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            if (distance < closest.distance && distance <= ATTACK_RANGE) {
+              return { enemy, distance };
+            }
+            return closest;
+          },
+          { enemy: null, distance: Infinity } as {
+            enemy: Enemy | null;
+            distance: number;
           }
-          return closest;
-        },
-        { enemy: null, distance: Infinity } as {
-          enemy: Enemy | null;
-          distance: number;
-        }
-      );
+        );
+      };
+
+      const closestEnemy = findClosestEnemy();
+      if (closestEnemy.enemy) {
+        const dx = closestEnemy.enemy.position.x - playerState.position.x;
+        const dy = closestEnemy.enemy.position.y - playerState.position.y;
+        const newRotation = Math.atan2(dy, dx);
+        setPlayerState((prev) => ({
+          ...prev,
+          rotation: newRotation,
+        }));
+      }
       if (!isPaused) {
         setEnemies((prev) =>
           prev.map((enemy) => {
@@ -1038,21 +1276,66 @@ export default function CosmicChickenRhapsody() {
         );
       }
       setProjectiles((prev) =>
-        prev
-          .map((projectile) => ({
-            ...projectile,
-            position: {
-              x: projectile.position.x + projectile.velocity.x,
-              y: projectile.position.y + projectile.velocity.y,
-            },
-          }))
-          .filter(
-            (projectile) =>
-              projectile.position.x > 0 &&
-              projectile.position.x < GAME_WIDTH &&
-              projectile.position.y > 0 &&
-              projectile.position.y < GAME_HEIGHT
-          )
+        prev.filter((projectile) => {
+          // Check if projectile is within game bounds
+          if (
+            projectile.position.x < 0 ||
+            projectile.position.x > GAME_WIDTH ||
+            projectile.position.y < 0 ||
+            projectile.position.y > GAME_HEIGHT
+          ) {
+            return false;
+          }
+
+          // Check collision with obstacles
+          const hitObstacle = obstacles.some((obstacle) => {
+            const dx = projectile.position.x - obstacle.position.x;
+            const dy = projectile.position.y - obstacle.position.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            return distance < (obstacle.size + projectile.size) / 2;
+          });
+
+          if (hitObstacle) {
+            createParticles(
+              projectile.position.x,
+              projectile.position.y,
+              "gray",
+              5,
+              2
+            );
+            return false;
+          }
+
+          // Check collision with player
+          const playerDx = projectile.position.x - playerState.position.x;
+          const playerDy = projectile.position.y - playerState.position.y;
+          const playerDistance = Math.sqrt(
+            playerDx * playerDx + playerDy * playerDy
+          );
+
+          if (
+            playerDistance < (PLAYER_SIZE + projectile.size) / 2 &&
+            !isInvulnerable
+          ) {
+            setGameState((prev) => ({
+              ...prev,
+              hearts: prev.hearts - 1,
+              gameOver: prev.hearts <= 1,
+            }));
+            createParticles(
+              playerState.position.x,
+              playerState.position.y,
+              "red",
+              20,
+              4
+            );
+            setIsInvulnerable(true);
+            setTimeout(() => setIsInvulnerable(false), 2000);
+            return false;
+          }
+
+          return true;
+        })
       );
       enemies.forEach((enemy) => {
         if (enemy.type === "Boss" && Math.random() < 0.02) {
@@ -1090,13 +1373,50 @@ export default function CosmicChickenRhapsody() {
       } else {
         setAttackPointer(null);
       }
+      setProjectiles((prev) =>
+        prev.filter((projectile) => {
+          // Check if projectile is within game bounds
+          if (
+            projectile.position.x < 0 ||
+            projectile.position.x > GAME_WIDTH ||
+            projectile.position.y < 0 ||
+            projectile.position.y > GAME_HEIGHT
+          ) {
+            return false;
+          }
+
+          // Check collision with obstacles
+          const hitObstacle = obstacles.some((obstacle) => {
+            const dx = projectile.position.x - obstacle.position.x;
+            const dy = projectile.position.y - obstacle.position.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            return distance < (obstacle.size + projectile.size) / 2;
+          });
+
+          if (hitObstacle) {
+            createParticles(
+              projectile.position.x,
+              projectile.position.y,
+              "gray",
+              5,
+              2
+            );
+            return false;
+          }
+
+          return true;
+        })
+      );
     }, 16);
+
     return () => clearInterval(gameLoop);
   }, [
     gameState.gameOver,
     isPaused,
+    // bossAttackPatterns,
     activePowerUps,
     projectiles,
+    obstacles,
     spawnBossProjectile,
     playerState.position,
     isInvulnerable,
@@ -1154,6 +1474,7 @@ export default function CosmicChickenRhapsody() {
       if (!gameStarted && e.key === " ") {
         setGameStarted(true);
       }
+      if (e.key === "c" || e.key === "C") shootProjectile();
       if (e.key === "1" || e.key === "q") activateSpecialPower(1);
       if (e.key === "2" || e.key === "f") activateSpecialPower(2);
       if (e.key === "3" || e.key === "r") activateSpecialPower(3);
@@ -1170,7 +1491,7 @@ export default function CosmicChickenRhapsody() {
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("keyup", handleKeyUp);
     };
-  }, [gameState.gameOver, activateSpecialPower, gameStarted]);
+  }, [gameState.gameOver, activateSpecialPower, gameStarted, shootProjectile]);
 
   useEffect(() => {
     const handleTouchStart = (e: TouchEvent) => {
@@ -1310,25 +1631,52 @@ export default function CosmicChickenRhapsody() {
                 }}
               />
             </div>
-
             {/* Enemies */}
-            <div className="absolute bottom-16 left-4 w-32 h-2 bg-gray-700 rounded-full">
-              <div
-                className="h-full bg-red-500 rounded-full transition-all duration-100"
-                style={{
-                  width: `${
-                    ((ATTACK_COOLDOWN - attackCooldown) / ATTACK_COOLDOWN) * 100
-                  }%`,
-                }}
-              />
-            </div>
-            {!tutorialShown && <GameTutorial onClose={startGame} />}
+            <div className="absolute bottom-16 left-4 flex flex-col space-y-2">
+              {/* Attack Cooldown Bar */}
+              <div className="relative w-32 h-2 bg-gray-700 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-red-500 rounded-full transition-all duration-200 ease-out"
+                  style={{
+                    width: `${
+                      ((ATTACK_COOLDOWN - attackCooldown) / ATTACK_COOLDOWN) *
+                      100
+                    }%`,
+                  }}
+                />
+              </div>
 
+              {/* Projectile Reload Bar */}
+              <div className="relative w-32 h-4 bg-gray-300 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-yellow-400 transition-all duration-100 ease-linear"
+                  style={{ width: `${projectileReloadProgress}%` }}
+                />
+              </div>
+            </div>
+
+            {!tutorialShown && <GameTutorial onClose={startGame} />}
             {!showTutorial && !gameStarted && (
               <div className="absolute inset-0 bg-black/80 flex items-center justify-center text-white text-2xl">
                 Press Space to Start
               </div>
             )}
+            {projectiles.map((projectile) => (
+              <div
+                key={projectile.id}
+                className="absolute bg-yellow-400 rounded-full"
+                style={{
+                  left: projectile.position.x,
+                  top: projectile.position.y,
+                  width: projectile.size,
+                  height: projectile.size,
+                  transform: "translate(-50%, -50%)",
+                }}
+              />
+            ))}
+
+            {/* // Add this to your UI to show the projectile reload progress (if not already present) */}
+
             {/* Pause Overlay */}
             {isPaused && (
               <div className="absolute inset-0 bg-black/80 flex flex-col items-center justify-center text-white z-50">
@@ -1407,7 +1755,6 @@ export default function CosmicChickenRhapsody() {
                 }}
               />
             )}
-
             {/* Power-ups */}
             {powerUps.map((powerUp) => (
               <div
@@ -1425,7 +1772,6 @@ export default function CosmicChickenRhapsody() {
                 )}
               </div>
             ))}
-
             {/* Particles */}
             {particles.map((particle) => (
               <div
@@ -1475,14 +1821,9 @@ export default function CosmicChickenRhapsody() {
               <p className="text-xl mb-4">
                 Final Score: {Math.floor(gameState.score)}
               </p>
-              <p className="text-xl mb-2">Personal High Score: {highScore}</p>
-              {/* <p className="text-xl mb-2">Highest Wave: {highestWave}</p> */}
-              {/* <p className="text-xl mb-2">High Score: {highScore}</p> */}
+              <p className="text-xl mb-2">High Score: {highScore}</p>
               <p className="text-xl mb-2">Press Space or Click to Restart</p>
-              <div className="absolute top-4 right-4 text-white">
-                <p className="text-xl mb-2">Highest score achieved: 1524545</p>
-                <p className="text-xl mb-2">Highest Wave Covered: 75</p>
-              </div>
+
               <button
                 className="px-4 py-2 bg-purple-600 rounded-lg z-50 hover:bg-purple-700 transition"
                 onClick={() => restartGame()}
@@ -1514,6 +1855,29 @@ export default function CosmicChickenRhapsody() {
               bossActive ? "bg-red-900/20" : ""
             } transition-colors duration-1000`}
           />
+
+          {/* Render obstacles */}
+          {obstacles.map((obstacle) => (
+            <div
+              key={obstacle.id}
+              className={` z-1 absolute -[49% 51% 86% 14% / 38% 57% 43% 62% ] ${
+                obstacle.type === "Rock"
+                  ? "bg-[#202020]"
+                  : obstacle.type === "Asteroid"
+                  ? "bg-[#222c36]"
+                  : "bg-[#3c3c3c]"
+              }`}
+              style={{
+                left: obstacle.position.x - obstacle.size / 2,
+                top: obstacle.position.y - obstacle.size / 2,
+                width: obstacle.size,
+                height: obstacle.size,
+              }}
+            />
+          ))}
+
+          {/* Render bosses */}
+
           {/* Controls guide */}
           <div className="absolute bottom-4 right-4 text-white text-sm opacity-50">
             <div>WASD or Arrow keys to move</div>
