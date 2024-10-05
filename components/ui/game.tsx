@@ -289,6 +289,7 @@ type Projectile = {
   size: number;
 };
 export default function CosmicChickenRhapsody() {
+  const [highestWave, setHighestWave] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const [projectiles, setProjectiles] = useState<Projectile[]>([]);
   const [highScore, setHighScore] = useState(0); // Initialize with default value
@@ -308,17 +309,7 @@ export default function CosmicChickenRhapsody() {
       type: "HEART" | "STAR";
     }>
   >([]);
-  useEffect(() => {
-    // Read values from localStorage only on client-side
-    const savedHighScore = parseInt(
-      localStorage.getItem("highScore") || "0",
-      10
-    );
-    const savedTutorialShown = localStorage.getItem("tutorialShown") === "true";
 
-    setHighScore(savedHighScore);
-    setTutorialShown(savedTutorialShown);
-  }, []);
   const [showTutorial, setShowTutorial] = useState(true);
   const [gameStarted, setGameStarted] = useState(false);
   const getGameDimensions = useCallback(() => {
@@ -679,6 +670,28 @@ export default function CosmicChickenRhapsody() {
     spawnPowerUp();
   }, [gameState.wave, spawnPowerUp, GAME_HEIGHT, GAME_WIDTH]);
   useEffect(() => {
+    // Read values from localStorage only on client-side
+    const savedHighScore = parseInt(
+      localStorage.getItem("highScore") || "0",
+      10
+    );
+    const savedHighestWave = parseInt(
+      localStorage.getItem("highestWave") || "0",
+      10
+    );
+    const savedTutorialShown = localStorage.getItem("tutorialShown") === "true";
+
+    setHighScore(savedHighScore);
+    setHighestWave(savedHighestWave);
+    setTutorialShown(savedTutorialShown);
+  }, []);
+  useEffect(() => {
+    if (gameState.wave > highestWave) {
+      setHighestWave(gameState.wave);
+      localStorage.setItem("highestWave", gameState.wave.toString());
+    }
+  }, [gameState.wave, highestWave]);
+  useEffect(() => {
     const timer = setTimeout(() => {
       setPowerUpEffects((prev) =>
         prev.filter((effect) => Date.now() - effect.id < 1000)
@@ -905,7 +918,7 @@ export default function CosmicChickenRhapsody() {
                 4
               );
               setIsInvulnerable(true);
-              setTimeout(() => setIsInvulnerable(false), 2000);
+              setTimeout(() => setIsInvulnerable(false), 1500);
             } else {
               // Shield hit particles
               createParticles(
@@ -1462,9 +1475,14 @@ export default function CosmicChickenRhapsody() {
               <p className="text-xl mb-4">
                 Final Score: {Math.floor(gameState.score)}
               </p>
-              <p className="text-xl mb-2">High Score: {highScore}</p>
+              <p className="text-xl mb-2">Personal High Score: {highScore}</p>
+              {/* <p className="text-xl mb-2">Highest Wave: {highestWave}</p> */}
+              {/* <p className="text-xl mb-2">High Score: {highScore}</p> */}
               <p className="text-xl mb-2">Press Space or Click to Restart</p>
-
+              <div className="absolute top-4 right-4 text-white">
+                <p className="text-xl mb-2">Highest score achieved: 1524545</p>
+                <p className="text-xl mb-2">Highest Wave Covered: 75</p>
+              </div>
               <button
                 className="px-4 py-2 bg-purple-600 rounded-lg z-50 hover:bg-purple-700 transition"
                 onClick={() => restartGame()}
