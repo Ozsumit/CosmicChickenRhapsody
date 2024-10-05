@@ -291,12 +291,8 @@ type Projectile = {
 export default function CosmicChickenRhapsody() {
   const [isPaused, setIsPaused] = useState(false);
   const [projectiles, setProjectiles] = useState<Projectile[]>([]);
-  const [highScore, setHighScore] = useState(() => {
-    return parseInt(localStorage.getItem("highScore") || "0", 10);
-  });
-  const [tutorialShown, setTutorialShown] = useState(() => {
-    return localStorage.getItem("tutorialShown") === "true";
-  });
+  const [highScore, setHighScore] = useState(0); // Initialize with default value
+  const [tutorialShown, setTutorialShown] = useState(false);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -312,7 +308,17 @@ export default function CosmicChickenRhapsody() {
       type: "HEART" | "STAR";
     }>
   >([]);
+  useEffect(() => {
+    // Read values from localStorage only on client-side
+    const savedHighScore = parseInt(
+      localStorage.getItem("highScore") || "0",
+      10
+    );
+    const savedTutorialShown = localStorage.getItem("tutorialShown") === "true";
 
+    setHighScore(savedHighScore);
+    setTutorialShown(savedTutorialShown);
+  }, []);
   const [showTutorial, setShowTutorial] = useState(true);
   const [gameStarted, setGameStarted] = useState(false);
   const getGameDimensions = useCallback(() => {
