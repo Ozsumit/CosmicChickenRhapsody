@@ -436,24 +436,24 @@ export default function CosmicChickenRhapsody() {
       spread: number = Math.PI * 0.5,
       direction: number = 0
     ) => {
-      if (particleSystemRef.current && gameAreaRef.current) {
-        const canvas = document.createElement("canvas");
-        const ctx = canvas.getContext("2d")!;
+      if (particleSystemRef.current && canvasRef.current) {
+        // Create temporary canvas for color conversion
+        const tempCanvas = document.createElement("canvas");
+        const ctx = tempCanvas.getContext("2d")!;
         ctx.fillStyle = color;
         ctx.fillRect(0, 0, 1, 1);
         const rgb = Array.from(
           ctx.getImageData(0, 0, 1, 1).data.slice(0, 3)
         ).map((v) => v / 255);
 
-        const gameAreaRect = gameAreaRef.current.getBoundingClientRect();
-        const canvasRect =
-          gameAreaRef.current.gl.canvas.getBoundingClientRect();
+        // Get canvas dimensions and position
+        const canvasRect = canvasRef.current.getBoundingClientRect();
 
-        // Convert game area coordinates to canvas coordinates
+        // Convert screen coordinates to canvas coordinates
         const canvasX =
-          ((x - gameAreaRect.left) / gameAreaRect.width) * canvasRect.width;
+          ((x - canvasRect.left) / canvasRect.width) * canvasRef.current.width;
         const canvasY =
-          ((y - gameAreaRect.top) / gameAreaRect.height) * canvasRect.height;
+          ((y - canvasRect.top) / canvasRect.height) * canvasRef.current.height;
 
         particleSystemRef.current.addParticles(
           canvasX,
@@ -466,7 +466,7 @@ export default function CosmicChickenRhapsody() {
         );
       }
     },
-    [particleSystemRef, gameAreaRef]
+    [particleSystemRef]
   );
 
   const AttackIndicator = ({ type }: { type: AttackType }) => {
