@@ -1285,7 +1285,7 @@ export default function CosmicChickenRhapsody() {
               }}
             >
               <Image
-                src="/images/player.png"
+                src="/images/Player.png"
                 alt="Player"
                 height={50}
                 width={50}
