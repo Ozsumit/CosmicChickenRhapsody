@@ -502,7 +502,7 @@ export default function CosmicChickenRhapsody() {
   const GAME_HEIGHT = gameDimensions.height;
   const [gameState, setGameState] = useState({
     score: 0,
-    wave: 13,
+    wave: 0,
     hearts: 3,
     gameOver: false,
     combo: 1,
