@@ -853,6 +853,8 @@ export default function CosmicChickenRhapsody() {
       });
     }
 
+
+    
     if (shouldSpawnBoss) {
       const bossHealth = 10000 + gameState.wave * 750;
       const bossType =
