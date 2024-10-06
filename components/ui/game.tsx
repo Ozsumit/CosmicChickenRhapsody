@@ -320,6 +320,7 @@ interface Position {
 // const BASE_PROJECTILE_DAMAGE = 200;
 
 export default function CosmicChickenRhapsody() {
+  const [projectileReloadTime, setProjectileReloadTime] = useState(100);
   const [playerStats, setPlayerStats] =
     useState<PlayerStats>(BASE_PLAYER_STATS);
   const [activeBoss, setActiveBoss] = useState<Enemy | null>(null);
@@ -330,7 +331,7 @@ export default function CosmicChickenRhapsody() {
   );
 
   const [canShootProjectile, setCanShootProjectile] = useState(true);
-  const [projectileReloadProgress, setProjectileReloadProgress] = useState(150);
+  const [projectileReloadProgress, setProjectileReloadProgress] = useState(100);
   const [isPaused, setIsPaused] = useState(false);
   // const [projectiles, setProjectiles] = useState<Projectile[]>([]);
   const [highScore, setHighScore] = useState(0); // Initialize with default value
@@ -485,6 +486,9 @@ export default function CosmicChickenRhapsody() {
         projectileSize: Math.min(prev.projectileSize * 1.05, 15), // 5% increase, max size 15
         attackRange: Math.min(prev.attackRange * 1.05, 150), // 5% increase, max range 150
       }));
+
+      // Decrease reload time by 5%, with a minimum of 50 (2.5 seconds)
+      setProjectileReloadTime((prev) => Math.max(Math.floor(prev * 0.95), 50));
     }
   };
   // Update game dimensions when the window resizes
@@ -739,10 +743,10 @@ export default function CosmicChickenRhapsody() {
     if (!canShootProjectile) {
       const reloadInterval = setInterval(() => {
         setProjectileReloadProgress((prev) => {
-          if (prev >= 150) {
+          if (prev >= projectileReloadTime) {
             clearInterval(reloadInterval);
             setCanShootProjectile(true);
-            return 150;
+            return projectileReloadTime;
           }
           return prev + 1;
         });
@@ -750,7 +754,7 @@ export default function CosmicChickenRhapsody() {
 
       return () => clearInterval(reloadInterval);
     }
-  }, [canShootProjectile]);
+  }, [canShootProjectile, projectileReloadTime]);
   // const [bossActive, setBossActive] = useState(false);
   const activateSpecialPower = useCallback(
     (powerNumber: number) => {
@@ -2096,7 +2100,6 @@ export default function CosmicChickenRhapsody() {
               %
             </div>
           </div>
-
 
           {/* Render obstaclestry */}
           {obstacles.map((obstacle) => (
