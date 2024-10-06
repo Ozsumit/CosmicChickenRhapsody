@@ -2113,7 +2113,7 @@ export default function CosmicChickenRhapsody() {
               <Image
                 width={100}
                 height={100}
-                src={`/images/${obstacle.type.toLowerCase()}.png`}
+                src={`/images/${obstacle.type}.png`}
                 alt={obstacle.type}
                 className="w-full h-full object-cover"
               />
