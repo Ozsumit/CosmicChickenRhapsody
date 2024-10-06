@@ -2096,7 +2096,9 @@ export default function CosmicChickenRhapsody() {
               %
             </div>
           </div>
-          {/* Render obstacles */}
+
+
+          {/* Render obstaclestry */}
           {obstacles.map((obstacle) => (
             <div
               key={obstacle.id}
