@@ -832,11 +832,11 @@ export default function CosmicChickenRhapsody() {
     for (let i = 0; i < numEnemies; i++) {
       let x, y;
       if (Math.random() < 0.5) {
-        x = Math.random() < 0.5 ? -30 : GAME_WIDTH + 40;
+        x = Math.random() < 0.5 ? -30 : GAME_WIDTH + 30;
         y = Math.random() * GAME_HEIGHT;
       } else {
         x = Math.random() * GAME_WIDTH;
-        y = Math.random() < 0.5 ? -30 : GAME_HEIGHT + 40;
+        y = Math.random() < 0.5 ? -30 : GAME_HEIGHT + 30;
       }
 
       newEnemies.push({
@@ -853,8 +853,6 @@ export default function CosmicChickenRhapsody() {
       });
     }
 
-
-    
     if (shouldSpawnBoss) {
       const bossHealth = 10000 + gameState.wave * 750;
       const bossType =
@@ -1820,7 +1818,7 @@ export default function CosmicChickenRhapsody() {
                 <Star fill="yellow" className="text-yellow-400" />
                 <span>Stars: {gameState.stars}</span>
               </div>
-              <div className="flex z-50 ml-16 justify-center gap-4">
+              <div className="flex z-50 ml-8 justify-center gap-4">
                 {Object.entries(POWER_UPS).map(([key, value], index) => (
                   <button
                     key={key}
