@@ -1,6 +1,8 @@
-import type { Metadata } from "next";
+"use client";
+// import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
+import { useEffect } from "react";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -13,16 +15,21 @@ const geistMono = localFont({
   weight: "100 900",
 });
 
-export const metadata: Metadata = {
-  title: "Cosmic Chicken Rhapsody",
-  description: "The Great cosmic adventure of the mighty chicken warrior",
-};
-
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  useEffect(() => {
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker
+        .register("/sw.js")
+        // .then((reg) => console.log("Service Worker registered"))
+        .catch((err) =>
+          console.error("Service Worker registration failed", err)
+        );
+    }
+  }, []);
   return (
     <html lang="en">
       <body
