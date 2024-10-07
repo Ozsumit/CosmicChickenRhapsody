@@ -825,7 +825,7 @@ export default function CosmicChickenRhapsody() {
     }
 
     // Increase enemy stats instead of spawning more
-    const waveMultiplier = 1 + gameState.wave * 0.05;
+    const waveMultiplier = 1 + gameState.wave * 0.03;
     const baseHealth = 650 + gameState.wave * 100;
     const baseSpeed = BASE_ENEMY_SPEED + gameState.wave * 0.04;
 
