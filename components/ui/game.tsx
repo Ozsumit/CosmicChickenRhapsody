@@ -378,7 +378,7 @@ export default function CosmicChickenRhapsody() {
       const dx = enemyPos.x - obstaclePos.x;
       const dy = enemyPos.y - obstaclePos.y;
       const distance = Math.sqrt(dx * dx + dy * dy);
-      const avoidanceRadius = obstacleSize + 60; // Extra buffer for smoother avoidance
+      const avoidanceRadius = obstacleSize + 75; // Extra buffer for smoother avoidance
 
       if (distance < avoidanceRadius) {
         const avoidanceStrength =
@@ -978,7 +978,7 @@ export default function CosmicChickenRhapsody() {
     });
     setEnemies([]);
     setPowerUps([]);
-        setActiveBoss(null); // Add this line to reset the boss state
+    setActiveBoss(null); // Add this line to reset the boss state
 
     setActivePowerUps([]);
     setPlayerState({
