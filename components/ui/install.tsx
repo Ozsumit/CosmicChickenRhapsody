@@ -12,18 +12,11 @@ interface BeforeInstallPromptEvent extends Event {
   prompt(): Promise<void>;
 }
 
-// interface ExtendedServiceWorkerRegistration extends ServiceWorkerRegistration {
-//   sync?: {
-//     register(tag: string): Promise<void>;
-//   };
-// }
-
 const PWAInstallAndNotifications: React.FC = () => {
   const [deferredPrompt, setDeferredPrompt] =
     useState<BeforeInstallPromptEvent | null>(null);
   const [isInstalled, setIsInstalled] = useState<boolean>(false);
   const [showInstallPrompt, setShowInstallPrompt] = useState<boolean>(false);
-  useState<boolean>(false);
 
   useEffect(() => {
     const handleBeforeInstallPrompt = (e: BeforeInstallPromptEvent) => {
@@ -48,9 +41,7 @@ const PWAInstallAndNotifications: React.FC = () => {
     }
 
     if ("serviceWorker" in navigator && "PushManager" in window) {
-      // setIsPushSupported(true);
       registerServiceWorker();
-      // checkSubscription();
     }
 
     return () => {
@@ -90,59 +81,30 @@ const PWAInstallAndNotifications: React.FC = () => {
     }
   };
 
-  // const checkSubscription = async () => {
-  //   try {
-  //     const registration = await navigator.serviceWorker.ready;
-  //     const subscription = await registration.pushManager.getSubscription();
-  //     setIsSubscribed(!!subscription);
-  //     if (!subscription) {
-  //       setShowNotificationPrompt(true);
-  //     }
-  //   } catch (error) {
-  //     console.error("Error checking subscription:", error);
-  //   }
-  // };
-
   return (
     <>
       {showInstallPrompt && !isInstalled && (
-        <div className="fixed top-0 right-4 bg-black text-white p-4 rounded-lg shadow-lg z-[100] flex items-center space-x-2">
-          <Download className="h-5 w-5" />
-          <p className="text-sm">Install our app!</p>
-          <Button onClick={handleInstall} variant="outline" size="sm">
+        <div className="fixed bottom-5 right-5 bg-slate-900 border border-slate-800 text-white p-4 rounded-lg shadow-lg z-[100] flex items-center space-x-3 transition-transform transform scale-100 hover:scale-105">
+          <Download className="h-5 w-5 text-gray-300" />
+          <p className="text-sm">Install our app </p>
+          <Button
+            onClick={handleInstall}
+            variant="outline"
+            size="sm"
+            className="bg-slate-800 hover:bg-slate-700 text-white rounded px-3 py-1 transition-all"
+          >
             Install
           </Button>
           <Button
             onClick={() => setShowInstallPrompt(false)}
             variant="ghost"
             size="sm"
+            className="text-gray-300 hover:text-gray-200"
           >
             <X className="h-4 w-4" />
           </Button>
         </div>
       )}
-      {/* {isPushSupported && showNotificationPrompt && (
-        <div className="fixed bottom-4 right-4 bg-black text-white p-4 rounded-lg shadow-lg z-[100] flex items-center space-x-2">
-          <Bell className="h-5 w-5" />
-          <p className="text-sm z-50">
-            {isSubscribed ? "Notifications enabled" : "Enable notifications?"}
-          </p>
-          <Button
-            onClick={isSubscribed ? unsubscribeUser : subscribeUser}
-            variant="outline"
-            size="sm"
-          >
-            {isSubscribed ? "Disable" : "Enable"}
-          </Button>
-          <Button
-            onClick={() => setShowNotificationPrompt(false)}
-            variant="ghost"
-            size="sm"
-          >
-            <X className="h-4 w-4" />
-          </Button>
-        </div>
-      )} */}
     </>
   );
 };
