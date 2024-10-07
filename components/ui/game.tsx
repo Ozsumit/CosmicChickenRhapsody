@@ -819,8 +819,10 @@ export default function CosmicChickenRhapsody() {
       gameState.wave > 0 && gameState.wave % 5 === 0 && !activeBoss;
 
     // Reduce obstacle count
-    if (gameState.wave % 3 === 0) {
-      const newObstacles = generateObstacles(3); // Reduced from 5 to 3
+    const maxObstacles = 10; // Set a maximum number of obstacles
+    if (gameState.wave % 3 === 0 && obstacles.length < maxObstacles) {
+      const numNewObstacles = Math.min(3, maxObstacles - obstacles.length);
+      const newObstacles = generateObstacles(numNewObstacles);
       setObstacles((prev) => [...prev, ...newObstacles]);
     }
 
@@ -965,7 +967,7 @@ export default function CosmicChickenRhapsody() {
   }, [gameState.gameOver]);
 
   // Define a reusable restart function
-  const restartGame = () => {
+  const restartGame = useCallback(() => {
     setGameState({
       score: 0,
       wave: 0,
@@ -982,9 +984,11 @@ export default function CosmicChickenRhapsody() {
       rotation: 0,
       velocity: { x: 0, y: 0 },
     });
-    setProjectileDamage(ATTACK_DAMAGE.NORMAL); // Reset projectile damage
+    setProjectileDamage(ATTACK_DAMAGE.NORMAL);
+    setPlayerStats(BASE_PLAYER_STATS); // Reset player stats to base values
+    setProjectileReloadTime(100); // Reset projectile reload time
     setGameStarted(true);
-  };
+  }, [GAME_WIDTH, GAME_HEIGHT]);
   const updateBossBehavior = (boss: Enemy) => {
     const bossSpeed = boss.speed * 0.5;
     const dx = playerState.position.x - boss.position.x;
