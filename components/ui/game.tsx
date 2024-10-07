@@ -978,6 +978,8 @@ export default function CosmicChickenRhapsody() {
     });
     setEnemies([]);
     setPowerUps([]);
+        setActiveBoss(null); // Add this line to reset the boss state
+
     setActivePowerUps([]);
     setPlayerState({
       position: { x: GAME_WIDTH / 2, y: GAME_HEIGHT / 2 },
