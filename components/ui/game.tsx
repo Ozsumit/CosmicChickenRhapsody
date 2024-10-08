@@ -1,8 +1,17 @@
 "use client";
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { Trophy, Zap, Heart, Sword, Star } from "lucide-react";
+import { Trophy, Zap, Heart, Sword, Star, CoinsIcon } from "lucide-react";
 import Image from "next/image";
 import GameTutorial from "../gametuto";
+import { toast } from "react-hot-toast";
+
+import { Button } from "./buttonmsp";
+// import { randomInt } from "crypto";
+// import toast, { ToastBar } from "react-hot-toast";
+// import { Toaster } from "./sonner";
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+// import { Dashboard, UpgradeMenu } from "../ui/dashboard";
+// import { Card, CardHeader, CardContent } from "@/components/ui/card";
 // import { SparklesCore } from "./sparkles";
 
 // WebGL shader programs
@@ -250,15 +259,34 @@ const ATTACK_RANGE = {
   NORMAL: 100,
   CLUCKINATOR: 160,
 };
-type PlayerStats = {
+// type PlayerStats = {
+//   attackDamage: number;
+//   moveSpeed: number;
+//   projectileSpeed: number;
+//   projectileSize: number;
+//   attackRange: number;
+// };
+// type BossType = "LaserChicken" | "EggThrower" | "FeatherStorm";
+
+// Define the player stats type
+interface PlayerStats {
   attackDamage: number;
   moveSpeed: number;
   projectileSpeed: number;
   projectileSize: number;
   attackRange: number;
-};
-// type BossType = "LaserChicken" | "EggThrower" | "FeatherStorm";
+}
 
+// Define the game state type
+// interface GameState {
+//   score: number;
+//   wave: number;
+//   hearts: number;
+//   gameOver: boolean;
+//   combo: number;
+//   stars: number;
+//   coins: number;
+// }
 interface Obstacle {
   id: number;
   position: { x: number; y: number };
@@ -268,9 +296,6 @@ interface Obstacle {
 }
 
 type AttackType = "NORMAL" | "FEATHER_FURY" | "CLUCKINATOR";
-const getAttackDamage = (baseAttackDamage: number, wave: number) => {
-  return Math.round(baseAttackDamage * Math.pow(1.12, wave));
-};
 
 type Enemy = {
   id: number;
@@ -285,7 +310,7 @@ type Enemy = {
 
 type PowerUp = {
   id: number;
-  type: "HEART" | "STAR";
+  type: "HEART" | "STAR" | "COINS";
   position: { x: number; y: number };
 };
 
@@ -317,12 +342,30 @@ interface Position {
   x: number;
   y: number;
 }
+const tips = [
+  "Confused?! Press T to view the tutorial guide.",
+  "Don't forget to dodge! Use obstacles to hide from projectiles.",
+  "Feeling lost? Just follow the cluck of the Cosmic Chicken!",
+  "Pro tip: Enemies hate it when you hit them with Projectiles!",
+  "Keep going, champion! The chicken believes in you.",
+  "You can always take a break... just kidding, the enemies won't stop!",
+  "Why did the chicken cross the Cosmic Arena? To watch you fight!",
+  "Just a headsup, Using shield will not save ypu from projectiles",
+  "Press 1, 2, 3 or Q, F, R keys for special powers",
+];
 // const BASE_PROJECTILE_DAMAGE = 200;
 
 export default function CosmicChickenRhapsody() {
-  const [projectileReloadTime, setProjectileReloadTime] = useState(100);
+  // Fetch coins from localStorage on component mount
+
+  localStorage.setItem("ATTACKDAMAGE", JSON.stringify(ATTACK_DAMAGE.NORMAL));
+  localStorage.setItem("PLAYERSPEED", JSON.stringify(BASE_PLAYER_SPEED));
+
   const [playerStats, setPlayerStats] =
     useState<PlayerStats>(BASE_PLAYER_STATS);
+  const [projectileReloadTime, setProjectileReloadTime] = useState(100);
+  // const [playerStats, setPlayerStats] =
+  useState<PlayerStats>(BASE_PLAYER_STATS);
   const [activeBoss, setActiveBoss] = useState<Enemy | null>(null);
   // const [coins, setCoins] = useState<Coin[]>([]);
   const [projectiles, setProjectiles] = useState<Projectile[]>([]);
@@ -348,7 +391,7 @@ export default function CosmicChickenRhapsody() {
     Array<{
       id: number;
       position: { x: number; y: number };
-      type: "HEART" | "STAR";
+      type: "HEART" | "STAR" | "COINS";
     }>
   >([]);
   useEffect(() => {
@@ -392,6 +435,19 @@ export default function CosmicChickenRhapsody() {
     },
     []
   );
+  const UPGRADE_INCREMENT = 1.2; // or whatever value you want
+  // eslint-disable-next-line
+  const onUpgrade = (stat: keyof PlayerStats, cost: number) => {
+    setGameState((prevState) => ({
+      ...prevState,
+      coins: prevState.coins - cost,
+    }));
+
+    setPlayerStats((prevStats) => ({
+      ...prevStats,
+      [stat]: prevStats[stat] * UPGRADE_INCREMENT,
+    }));
+  };
   const [showTutorial, setShowTutorial] = useState(true);
   const [gameStarted, setGameStarted] = useState(false);
   const getGameDimensions = useCallback(() => {
@@ -511,6 +567,7 @@ export default function CosmicChickenRhapsody() {
     gameOver: false,
     combo: 1,
     stars: 0,
+    coins: 0, // Add this line
   });
 
   const [playerState, setPlayerState] = useState({
@@ -616,9 +673,12 @@ export default function CosmicChickenRhapsody() {
       </div>
     );
   };
-
+  const getAttackDamage = (baseAttackDamage: number, wave: number) => {
+    return Math.round(baseAttackDamage * Math.pow(1.12, wave));
+  };
   const attack = useCallback(() => {
     if (gameState.gameOver || !canAttack) return;
+
     const currentAttackType = activePowerUps.some(
       (p) => p.type === "FEATHER_FURY"
     )
@@ -626,6 +686,17 @@ export default function CosmicChickenRhapsody() {
       : activePowerUps.some((p) => p.type === "CLUCKINATOR")
       ? "CLUCKINATOR"
       : "NORMAL";
+
+    const baseAttackDamage = activePowerUps.some(
+      (p) => p.type === "CLUCKINATOR"
+    )
+      ? playerStats.attackDamage * 1.5
+      : playerStats.attackDamage;
+
+    const attackRange =
+      ATTACK_RANGE[
+        currentAttackType === "CLUCKINATOR" ? "CLUCKINATOR" : "NORMAL"
+      ];
 
     setAttackType(currentAttackType);
     setCanAttack(false);
@@ -636,12 +707,7 @@ export default function CosmicChickenRhapsody() {
       setIsAttacking(false);
     }, 200);
 
-    const attackRange =
-      ATTACK_RANGE[
-        currentAttackType === "CLUCKINATOR" ? "CLUCKINATOR" : "NORMAL"
-      ];
-    const baseDamage = ATTACK_DAMAGE[currentAttackType];
-    const scaledDamage = getAttackDamage(baseDamage, gameState.wave);
+    const scaledDamage = getAttackDamage(baseAttackDamage, gameState.wave);
 
     setEnemies((prev) => {
       return prev
@@ -691,7 +757,14 @@ export default function CosmicChickenRhapsody() {
     playerState.position,
     activePowerUps,
     createParticles,
+    ATTACK_RANGE,
+    playerStats.attackDamage,
+    ATTACK_RANGE,
+    getAttackDamage,
   ]);
+
+  // ...
+
   const shootProjectile = useCallback(() => {
     if (canShootProjectile && enemies.length > 0) {
       const closestEnemy = findClosestEnemy(playerState.position, enemies);
@@ -702,12 +775,18 @@ export default function CosmicChickenRhapsody() {
         const angle = Math.atan2(dy, dx);
         // const speed = 14;
 
+        const projectileSpeed = activePowerUps.some(
+          (p) => p.type === "FEATHER_FURY"
+        )
+          ? playerStats.projectileSpeed * 1.5
+          : playerStats.projectileSpeed;
+
         const newProjectile: Projectile = {
           id: Date.now(),
           position: { ...playerState.position },
           velocity: {
-            x: Math.cos(angle) * playerStats.projectileSpeed,
-            y: Math.sin(angle) * playerStats.projectileSpeed,
+            x: Math.cos(angle) * projectileSpeed,
+            y: Math.sin(angle) * projectileSpeed,
           },
           size: playerStats.projectileSize,
           source: "player",
@@ -735,8 +814,11 @@ export default function CosmicChickenRhapsody() {
     canShootProjectile,
     enemies,
     playerState.position,
+    activePowerUps,
     findClosestEnemy,
     createParticles,
+    playerStats.projectileSpeed, // Add playerStats.projectileSpeed to the dependency array
+    playerStats.projectileSize, // Add playerStats.projectileSize to the dependency array
   ]);
 
   useEffect(() => {
@@ -793,10 +875,11 @@ export default function CosmicChickenRhapsody() {
     },
     [gameState.stars, playerState.position, createParticles]
   );
+
   const [waveAnnouncement, setWaveAnnouncement] = useState("");
   // const [isPaused, setIsPaused] = useState(false);
   const spawnPowerUp = useCallback(() => {
-    const powerUpTypes = ["HEART", "STAR"] as const;
+    const powerUpTypes = ["HEART", "STAR", "COINS"] as const;
     const type = powerUpTypes[Math.floor(Math.random() * powerUpTypes.length)];
 
     const powerUp: PowerUp = {
@@ -811,25 +894,64 @@ export default function CosmicChickenRhapsody() {
     setPowerUps((prev) => [...prev, powerUp]);
   }, [GAME_HEIGHT, GAME_WIDTH]);
   const spawnWave = useCallback(() => {
-    // Limit maximum enemies to 10
+    // Limit maximum enemies to 12
     const numEnemies = Math.min(3 + Math.floor(gameState.wave / 3), 12);
     const newEnemies: Enemy[] = [];
 
     const shouldSpawnBoss =
       gameState.wave > 0 && gameState.wave % 5 === 0 && !activeBoss;
 
-    // Reduce obstacle count
-    const maxObstacles = 10; // Set a maximum number of obstacles
+    // Limit maximum obstacles to 10
+    const maxObstacles = 16;
     if (gameState.wave % 3 === 0 && obstacles.length < maxObstacles) {
       const numNewObstacles = Math.min(3, maxObstacles - obstacles.length);
       const newObstacles = generateObstacles(numNewObstacles);
       setObstacles((prev) => [...prev, ...newObstacles]);
     }
+    function getRandomInt(min: number, max: number): number {
+      min = Math.ceil(min);
+      max = Math.floor(max);
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
 
-    // Increase enemy stats instead of spawning more
-    const waveMultiplier = 1 + gameState.wave * 0.03;
-    const baseHealth = 650 + gameState.wave * 100;
-    const baseSpeed = BASE_ENEMY_SPEED + gameState.wave * 0.04;
+    const randomInt = getRandomInt(1, 5);
+    if (gameState.wave % randomInt === 0 && gameState.wave !== 1) {
+      // Randomly select a tip
+      const randomTip = tips[Math.floor(Math.random() * tips.length)];
+
+      // Display the toast notification
+      toast(randomTip, {
+        style: {
+          fontFamily: "monospace",
+          background: "#000000", // Dark background for toast
+          color: "#ffff00", // Text color
+          borderRadius: "8px",
+          border: "1px solid #e7ce5a", // Border
+          padding: "12px",
+        },
+        icon: "📖", // Optional icon
+      });
+    }
+
+    // Limit for stats increase
+    const MAX_WAVE_MULTIPLIER = 5; // Maximum multiplier for enemy stats
+    const MAX_HEALTH = 5000; // Maximum health value
+    const MAX_SPEED = BASE_ENEMY_SPEED + 2.0; // Maximum speed value
+    const MAX_SIZE = BASE_ENEMY_SIZE + 5.0; // Maximum size value
+
+    // Calculate wave multiplier with an upper limit
+    const waveMultiplier = Math.min(
+      1 + gameState.wave * 0.03,
+      MAX_WAVE_MULTIPLIER
+    );
+
+    // Calculate health, speed, and size with limits
+    const baseHealth = Math.min(750 + gameState.wave * 150, MAX_HEALTH);
+    const baseSpeed = Math.min(
+      BASE_ENEMY_SPEED + gameState.wave * 0.04,
+      MAX_SPEED
+    );
+    const baseSize = Math.min(BASE_ENEMY_SIZE + gameState.wave * 0.3, MAX_SIZE);
 
     for (let i = 0; i < numEnemies; i++) {
       let x, y;
@@ -850,7 +972,7 @@ export default function CosmicChickenRhapsody() {
         maxHealth: baseHealth * waveMultiplier,
         position: { x, y },
         speed: baseSpeed * waveMultiplier,
-        size: BASE_ENEMY_SIZE + gameState.wave * 0.3,
+        size: baseSize * waveMultiplier,
         image: "/images/enemy.png",
       });
     }
@@ -877,6 +999,7 @@ export default function CosmicChickenRhapsody() {
       newEnemies.push(newBoss);
       setActiveBoss(newBoss);
     }
+
     updatePlayerStats(gameState.wave + 1);
     setWaveAnnouncement(`Wave ${gameState.wave + 1}`);
     setTimeout(() => setWaveAnnouncement(""), 3000);
@@ -890,6 +1013,7 @@ export default function CosmicChickenRhapsody() {
     GAME_HEIGHT,
     updatePlayerStats,
     GAME_WIDTH,
+    obstacles.length,
     generateObstacles,
     activeBoss,
   ]);
@@ -907,7 +1031,7 @@ export default function CosmicChickenRhapsody() {
     type,
   }: {
     position: { x: number; y: number };
-    type: "HEART" | "STAR";
+    type: "HEART" | "STAR" | "COINS";
   }) => {
     return (
       <div
@@ -965,9 +1089,11 @@ export default function CosmicChickenRhapsody() {
       window.removeEventListener("keydown", handleRestart);
     };
   }, [gameState.gameOver]);
+  // const [coins] = useState(0);
 
   // Define a reusable restart function
   const restartGame = useCallback(() => {
+    const savedCoins = parseInt(localStorage.getItem("coins") || "0", 10);
     setGameState({
       score: 0,
       wave: 0,
@@ -975,6 +1101,7 @@ export default function CosmicChickenRhapsody() {
       gameOver: false,
       combo: 1,
       stars: 0,
+      coins: savedCoins,
     });
     setEnemies([]);
     setPowerUps([]);
@@ -986,11 +1113,13 @@ export default function CosmicChickenRhapsody() {
       rotation: 0,
       velocity: { x: 0, y: 0 },
     });
+    setPlayerStats(BASE_PLAYER_STATS);
     setProjectileDamage(ATTACK_DAMAGE.NORMAL);
     setPlayerStats(BASE_PLAYER_STATS); // Reset player stats to base values
     setProjectileReloadTime(100); // Reset projectile reload time
     setGameStarted(true);
   }, [GAME_WIDTH, GAME_HEIGHT]);
+
   const updateBossBehavior = (boss: Enemy) => {
     const bossSpeed = boss.speed * 0.5;
     const dx = playerState.position.x - boss.position.x;
@@ -1203,6 +1332,7 @@ export default function CosmicChickenRhapsody() {
             })
             .filter(Boolean) as Enemy[]
       );
+
       const playerHit = projectiles.some((projectile) => {
         if (projectile.source === "player") return false; // Player's own projectiles can't hurt them
 
@@ -1313,22 +1443,29 @@ export default function CosmicChickenRhapsody() {
               ...prev,
               hearts: Math.min(prev.hearts + 1, 5),
             }));
-            // setLastMessage("Extra heart collected!");
             createParticles(powerUp.position.x, powerUp.position.y, "red", 10);
           } else if (powerUp.type === "STAR") {
             setGameState((prev) => ({
               ...prev,
               stars: prev.stars + 10,
             }));
-            // setLastMessage("10 stars collected!");
             createParticles(
               powerUp.position.x,
               powerUp.position.y,
               "yellow",
               10
             );
+          } else if (powerUp.type === "COINS") {
+            setGameState((prev) => {
+              const newCoins = prev.coins + 10;
+              localStorage.setItem("coins", newCoins.toString());
+              return {
+                ...prev,
+                coins: newCoins,
+              };
+            });
+            createParticles(powerUp.position.x, powerUp.position.y, "gold", 10);
           }
-          // Add this line to show the collection effect
           setPowerUpEffects((prev) => [
             ...prev,
             {
@@ -1696,8 +1833,11 @@ export default function CosmicChickenRhapsody() {
       if (!gameStarted && e.key === " ") {
         setGameStarted(true);
       }
-      if (e.key === "Shift") {
+      if (e.key === "Shift" || e.key === "x" || e.key === "X") {
         shootProjectile();
+      }
+      if (e.key === "T" || e.key === "t") {
+        setTutorialShown(false);
       }
       if (e.key === "1" || e.key === "q") activateSpecialPower(1);
       if (e.key === "2" || e.key === "f") activateSpecialPower(2);
@@ -1727,7 +1867,6 @@ export default function CosmicChickenRhapsody() {
         };
       }
     };
-
     const handleTouchMove = (e: TouchEvent) => {
       for (let i = 0; i < e.changedTouches.length; i++) {
         const touch = e.changedTouches[i];
@@ -1782,7 +1921,7 @@ export default function CosmicChickenRhapsody() {
   }, [enemies.length, gameState.gameOver, spawnWave]);
 
   return (
-    <div className="flex items-center h-screen w-screen justify-center min-h-screen overflow-hidden bg-black">
+    <div className="flex items-center h-screen w-[100vh] md:w-screen justify-center min-h-screen overflow-hidden bg-black">
       {/* <GameTutorial onClose={} /> */}
       <div
         ref={containerRef}
@@ -1801,13 +1940,19 @@ export default function CosmicChickenRhapsody() {
             height: `${gameDimensions.height}px`,
           }}
         >
-          <div className="absolute top-4 left-4 right-4 flex justify-between items-center text-white">
-            <div className="flex flex-row items-center z-50 gap-4">
-              <div className="flex flex-row items-center gap-2">
+          <div className="absolute top-4 left-4 right-4 flex justify-between items-start text-white">
+            <div className="flex flex-row items-start z-50 gap-4">
+              {/* <Dashboard
+                gameState={gameState}
+                playerStats={playerStats}
+                onUpgrade={onUpgrade}
+              /> */}
+              <div className="grid grid-cols-4 gap-2">
                 {Array.from({ length: gameState.hearts }).map((_, i) => (
                   <Heart key={i} fill="red" className="text-red-500" />
                 ))}
               </div>
+
               <div className="flex items-center gap-2">
                 <Zap className="text-yellow-500" />
                 <span>Wave {gameState.wave}</span>
@@ -1824,22 +1969,22 @@ export default function CosmicChickenRhapsody() {
                 <Star fill="yellow" className="text-yellow-400" />
                 <span>Stars: {gameState.stars}</span>
               </div>
-              <div className="flex z-50 ml-8 justify-center gap-4">
-                {Object.entries(POWER_UPS).map(([key, value], index) => (
-                  <button
-                    key={key}
-                    className={`px-4 py-2 rounded-lg text-black transition ${
-                      gameState.stars >= value.cost
-                        ? `bg-yellow-400 hover:bg-yellow-600`
-                        : "bg-white/85 cursor-not-allowed"
-                    }`}
-                    onClick={() => activateSpecialPower(index + 1)}
-                    disabled={gameState.stars < value.cost}
-                  >
-                    {value.name} ({value.cost} stars)
-                  </button>
-                ))}
-              </div>
+            </div>{" "}
+            <div className="flex flex-col z-50 ml-8 justify-center gap-3">
+              {Object.entries(POWER_UPS).map(([key, value], index) => (
+                <button
+                  key={key}
+                  className={`px-4 py-2 rounded-lg text-black transition ${
+                    gameState.stars >= value.cost
+                      ? `bg-yellow-400/50 hover:bg-yellow-600/50`
+                      : "bg-white/85 cursor-not-allowed"
+                  }`}
+                  onClick={() => activateSpecialPower(index + 1)}
+                  disabled={gameState.stars < value.cost}
+                >
+                  {value.name} ({value.cost} stars)
+                </button>
+              ))}
             </div>
           </div>
           <div className="gameareabgstars absolute h-full w-full inset-0 ">
@@ -1894,13 +2039,13 @@ export default function CosmicChickenRhapsody() {
                 />
               </div>
             </div>
-
             {!tutorialShown && <GameTutorial onClose={startGame} />}
             {!showTutorial && !gameStarted && (
               <div className="absolute inset-0 bg-black/80 flex items-center justify-center text-white text-2xl">
                 Press Space to Start
               </div>
             )}
+
             {projectiles.map((projectile) => (
               <div
                 key={projectile.id}
@@ -1916,17 +2061,16 @@ export default function CosmicChickenRhapsody() {
             ))}
 
             {/* // Add this to your UI to show the projectile reload progress (if not already present) */}
-
             {/* Pause Overlay */}
             {isPaused && (
-              <div className="absolute inset-0 bg-black/80 flex flex-col items-center justify-center text-white z-50">
+              <div className="absolute inset-0 bg-black/80 flex flex-col items-center justify-center text-white z-[49]">
                 <h2 className="text-4xl font-bold mb-4">Game Paused</h2>
                 <button
                   className="px-4 py-2 bg-purple-600 rounded-lg hover:bg-purple-700 transition"
                   onClick={() => setIsPaused(false)}
                 >
                   Resume
-                </button>
+                </button>{" "}
               </div>
             )}
             {enemies.map((enemy) => (
@@ -1970,7 +2114,6 @@ export default function CosmicChickenRhapsody() {
                 )}
               </>
             )}
-
             {/* Attack pointer */}
             {projectiles.map((projectile) => (
               <div
@@ -1985,6 +2128,9 @@ export default function CosmicChickenRhapsody() {
                 }}
               />
             ))}
+
+            {/* ... existing game elements ... */}
+
             {attackPointer && (
               <div
                 className="absolute w-8 h-8 border-2 border-red-500 rounded-full animate-pulse"
@@ -2007,11 +2153,14 @@ export default function CosmicChickenRhapsody() {
               >
                 {powerUp.type === "HEART" ? (
                   <Heart className="w-full h-full text-red-500 animate-bounce" />
-                ) : (
+                ) : powerUp.type === "STAR" ? (
                   <Star className="w-full h-full text-yellow-500 animate-bounce" />
-                )}
+                ) : powerUp.type === "COINS" ? (
+                  <CoinsIcon className="w-full h-full text-green-500 animate-bounce" />
+                ) : null}
               </div>
             ))}
+
             {/* Particles */}
             {particles.map((particle) => (
               <div
@@ -2048,12 +2197,10 @@ export default function CosmicChickenRhapsody() {
             ))}
           </div>
           <AttackIndicator type={attackType} />
-
           {/* Messages */}
           {/* <Alert className="absolute bottom-4 left-4 right-4 bg-purple-900/80 border-purple-500 text-white">
           <AlertDescription>{lastMessage}</AlertDescription>
         </Alert> */}
-
           {/* Game Over screen */}
           {gameState.gameOver && (
             <div className="absolute inset-0 bg-black/80 flex flex-col z-10 items-center justify-center text-white">
@@ -2072,41 +2219,12 @@ export default function CosmicChickenRhapsody() {
               </button>
             </div>
           )}
-
           {/* Controls */}
-
           <div
             className={`absolute inset-0 ${
               activeBoss ? "bg-red-900/20" : ""
             } transition-colors duration-1000`}
           />
-          <div className="absolute top-4 right-4 bg-black/50 p-2 rounded text-white text-sm">
-            <div>
-              Attack: +
-              {Math.round(
-                (playerStats.attackDamage / BASE_PLAYER_STATS.attackDamage -
-                  1) *
-                  100
-              )}
-              %
-            </div>
-            <div>
-              Speed: +
-              {Math.round(
-                (playerStats.moveSpeed / BASE_PLAYER_STATS.moveSpeed - 1) * 100
-              )}
-              %
-            </div>
-            <div>
-              Range: +
-              {Math.round(
-                (playerStats.attackRange / BASE_PLAYER_STATS.attackRange - 1) *
-                  100
-              )}
-              %
-            </div>
-          </div>
-
           {/* Render obstaclestry */}
           {obstacles.map((obstacle) => (
             <div
@@ -2128,18 +2246,67 @@ export default function CosmicChickenRhapsody() {
               />
             </div>
           ))}
-
           {/* Render bosses */}
-
           {/* Controls guide */}
           <div className="absolute bottom-4 right-4 text-white text-sm opacity-50">
+            <div className="flex flex-col top-4 right-4   rounded-xl w-max p-2 text-white bg-gray-700/85 text-sm">
+              <div>
+                Attack: +
+                {Math.round(
+                  (playerStats.attackDamage / BASE_PLAYER_STATS.attackDamage -
+                    1) *
+                    100
+                )}
+                %
+              </div>
+              <div>
+                Speed: +
+                {Math.round(
+                  (playerStats.moveSpeed / BASE_PLAYER_STATS.moveSpeed - 1) *
+                    100
+                )}
+                %
+              </div>
+              <div>
+                Range: +
+                {Math.round(
+                  (playerStats.attackRange / BASE_PLAYER_STATS.attackRange -
+                    1) *
+                    100
+                )}
+                %
+              </div>
+            </div>
             <div>WASD or Arrow keys to move</div>
             <div>Space or E to attack</div>
             <div>Shift key to shoot</div>
 
             <div>1, 2, 3 or Q, F, R keys for special powers</div>
             <div>P to pause/resume the game</div>
-          </div>
+            <Button
+              className=" z-50 bg-blue-300/50"
+              onClick={() => setTutorialShown(false)}
+            >
+              Tutorial
+            </Button>
+            <Button
+              className="z-50 bg-blue-300/50"
+              onClick={() =>
+                toast("Hello world!", {
+                  style: {
+                    background: "#0a0a0a", // Dark background for toast
+                    color: "#e7ce5a", // Text color
+                    borderRadius: "8px",
+                    border: "1px solid #e7ce5a", // Updated border with width and color
+                    padding: "12px",
+                  },
+                  icon: "👍", // Optional icon
+                })
+              }
+            >
+              Tutorial
+            </Button>
+          </div>{" "}
         </div>
       </div>
     </div>

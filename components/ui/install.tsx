@@ -23,6 +23,11 @@ const PWAInstallAndNotifications: React.FC = () => {
       e.preventDefault();
       setDeferredPrompt(e);
       setShowInstallPrompt(true);
+
+      // Automatically close after 10 seconds
+      setTimeout(() => {
+        setShowInstallPrompt(false);
+      }, 10000); // 10 seconds
     };
 
     const handleAppInstalled = () => {
@@ -30,11 +35,18 @@ const PWAInstallAndNotifications: React.FC = () => {
       setShowInstallPrompt(false);
     };
 
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "T" || event.key === "t") {
+        setShowInstallPrompt((prev) => !prev); // Toggle prompt visibility
+      }
+    };
+
     window.addEventListener(
       "beforeinstallprompt",
       handleBeforeInstallPrompt as EventListener
     );
     window.addEventListener("appinstalled", handleAppInstalled);
+    window.addEventListener("keydown", handleKeyDown); // Listen for "T" key
 
     if (window.matchMedia("(display-mode: standalone)").matches) {
       setIsInstalled(true);
@@ -50,6 +62,7 @@ const PWAInstallAndNotifications: React.FC = () => {
         handleBeforeInstallPrompt as EventListener
       );
       window.removeEventListener("appinstalled", handleAppInstalled);
+      window.removeEventListener("keydown", handleKeyDown); // Cleanup key event listener
     };
   }, []);
 

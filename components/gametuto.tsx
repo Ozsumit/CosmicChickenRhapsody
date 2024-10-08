@@ -26,7 +26,7 @@ const GameTutorial: React.FC<GameTutorialProps> = ({ onClose }) => {
   }, []);
 
   return (
-    <div className="absolute inset-0 bg-black/80 backdrop-blur-sm z-50 flex flex-col items-center justify-center">
+    <div className="absolute inset-0 bg-black/80 backdrop-blur-sm z-[51] flex flex-col items-center justify-center">
       {/* Close button, but disabled for 5 seconds */}
       <button
         className={`absolute top-6 right-6 text-gray-300 transition-colors ${

@@ -11,16 +11,17 @@ const Toaster = ({ ...props }: ToasterProps) => {
     duration: 5000,
     position: "top-right" as const,
     style: {
-      background: "#333",
+      background: "#1e1e1e", // Dark background for modern sleek theme
       color: "#fff",
       borderRadius: "8px",
       padding: "12px",
+      boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)", // Subtle shadow for sleek look
     },
     iconTheme: {
-      primary: "#4aed88",
+      primary: "#4aed88", // Vibrant green color for the icon
       secondary: "#fff",
     },
-    className: "custom-toast",
+    className: "custom-toast", // Optional class for custom styles
   };
 
   return <HotToaster toastOptions={toastOptions} {...props} />;
@@ -41,7 +42,7 @@ export const showToastWithLink = (
     </div>,
     {
       style: {
-        background: "#333",
+        background: "#1e1e1e", // Consistent dark theme
         color: "#fff",
         borderRadius: "8px",
         padding: "12px",
