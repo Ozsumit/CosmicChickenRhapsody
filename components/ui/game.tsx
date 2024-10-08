@@ -343,15 +343,15 @@ interface Position {
   y: number;
 }
 const tips = [
-  "Confused?! Press T to view the tutorial guide.",
-  "Don't forget to dodge! Use obstacles to hide from projectiles.",
-  "Feeling lost? Just follow the cluck of the Cosmic Chicken!",
-  "Pro tip: Enemies hate it when you hit them with Projectiles!",
-  "Keep going, champion! The chicken believes in you.",
-  "You can always take a break... just kidding, the enemies won't stop!",
-  "Why did the chicken cross the Cosmic Arena? To watch you fight!",
-  "Just a headsup, Using shield will not save ypu from projectiles",
-  "Press 1, 2, 3 or Q, F, R keys for special powers",
+  {messege:"Confused?! Press T to view the tutorial guide.",icon:"📖"},
+  {messege:"Don't forget to dodge! Use obstacles to hide from projectiles.",icon:"🥷"},
+ { messege:"Feeling lost? Just follow the cluck of the Cosmic Chicken!",icon:"👑"},
+ { messege:"Pro tip: Enemies hate it when you hit them with Projectiles!",icon:"🎯"},
+ { messege:"Keep going, champion! The chicken believes in you.",icon:"📣"},
+{  messege:"You can always take a break... just kidding, the enemies won't stop!",icon:"😈"},
+ { messege:"Why did the chicken cross the Cosmic Arena? To watch you fight!",icon:"🛣️"},
+  {messege:"Just a headsup, Using shield will not save ypu from projectiles",icon:"🛡️"},
+  {messege:"Press 1, 2, 3 or Q, F, R keys for special powers",icon:"🦹‍♀️"},
 ];
 // const BASE_PROJECTILE_DAMAGE = 200;
 
@@ -920,7 +920,7 @@ export default function CosmicChickenRhapsody() {
       const randomTip = tips[Math.floor(Math.random() * tips.length)];
 
       // Display the toast notification
-      toast(randomTip, {
+      toast(randomTip.messege, {
         style: {
           fontFamily: "monospace",
           background: "#000000", // Dark background for toast
@@ -929,7 +929,7 @@ export default function CosmicChickenRhapsody() {
           border: "1px solid #e7ce5a", // Border
           padding: "12px",
         },
-        icon: "📖", // Optional icon
+        icon: randomTip.icon, // Optional icon
       });
     }
 
