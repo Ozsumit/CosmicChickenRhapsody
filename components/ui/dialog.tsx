@@ -1,4 +1,4 @@
-import React, { useState, ReactNode } from "react";
+import React, {  ReactNode } from "react";
 
 interface DialogProps {
   children: ReactNode;
@@ -58,7 +58,7 @@ export const DialogTitle: React.FC<DialogTitleProps> = ({ children }) => {
 
 interface DialogContentProps {
   children: ReactNode;
-  className: String;
+  // className: String;
 }
 
 export const DialogContent: React.FC<DialogContentProps> = ({ children }) => {

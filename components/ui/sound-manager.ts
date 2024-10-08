@@ -7,6 +7,7 @@ class SoundManager {
 
   constructor() {
     this.context = new (window.AudioContext ||
+      // eslint-disable-next-line
       (window as any).webkitAudioContext)();
     this.bgmGainNode = this.context.createGain(); // Gain node for BGM
     this.sfxGainNode = this.context.createGain(); // Gain node for SFX

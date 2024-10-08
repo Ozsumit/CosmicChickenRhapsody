@@ -7,7 +7,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
+  // DialogTrigger,
 } from "./dialog";
 interface SoundSettingsProps {
   soundManager: {
@@ -53,7 +53,7 @@ const SoundSettings: React.FC<SoundSettingsProps> = ({ soundManager }) => {
   return (
     <div>
       <Dialog isOpen={isOpen} onClose={() => setIsOpen(false)}>
-        <DialogContent className={"border border-white text-cyan-50"}>
+        <DialogContent>
           <DialogHeader>
             <DialogTitle>Sound Settings</DialogTitle>
           </DialogHeader>
