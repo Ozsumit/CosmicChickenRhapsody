@@ -63,7 +63,9 @@ const GameTutorial: React.FC<GameTutorialProps> = ({ onClose }) => {
             <span className="font-bold text-white">•</span>
             <span>
               Shoot enemies by pressing{" "}
-              <span className="font-semibold">Shift</span>
+              <span className="font-semibold">Shift </span>
+              or
+              <span className="font-semibold"> X</span>
             </span>
           </li>
           <li className="flex items-center space-x-2">

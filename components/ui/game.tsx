@@ -4,8 +4,9 @@ import { Trophy, Zap, Heart, Sword, Star, CoinsIcon } from "lucide-react";
 import Image from "next/image";
 import GameTutorial from "../gametuto";
 import { toast } from "react-hot-toast";
-
+import { soundManager } from "./sound-manager";
 import { Button } from "./buttonmsp";
+import SoundSettings from "./tuner";
 // import { randomInt } from "crypto";
 // import toast, { ToastBar } from "react-hot-toast";
 // import { Toaster } from "./sonner";
@@ -220,6 +221,7 @@ const ATTACK_DAMAGE = {
   FEATHER_FURY: 750,
   CLUCKINATOR: 900,
 };
+
 // const GAME_WIDTH = 800;
 // const GAME_HEIGHT = 600;
 const PLAYER_SIZE = 40;
@@ -343,15 +345,35 @@ interface Position {
   y: number;
 }
 const tips = [
-  {messege:"Confused?! Press T to view the tutorial guide.",icon:"📖"},
-  {messege:"Don't forget to dodge! Use obstacles to hide from projectiles.",icon:"🥷"},
- { messege:"Feeling lost? Just follow the cluck of the Cosmic Chicken!",icon:"👑"},
- { messege:"Pro tip: Enemies hate it when you hit them with Projectiles!",icon:"🎯"},
- { messege:"Keep going, champion! The chicken believes in you.",icon:"📣"},
-{  messege:"You can always take a break... just kidding, the enemies won't stop!",icon:"😈"},
- { messege:"Why did the chicken cross the Cosmic Arena? To watch you fight!",icon:"🛣️"},
-  {messege:"Just a headsup, Using shield will not save ypu from projectiles",icon:"🛡️"},
-  {messege:"Press 1, 2, 3 or Q, F, R keys for special powers",icon:"🦹‍♀️"},
+  { messege: "Confused?! Press T to view the tutorial guide.", icon: "📖" },
+  {
+    messege: "Don't forget to dodge! Use obstacles to hide from projectiles.",
+    icon: "🥷",
+  },
+  {
+    messege: "Feeling lost? Just follow the cluck of the Cosmic Chicken!",
+    icon: "👑",
+  },
+  {
+    messege: "Pro tip: Enemies hate it when you hit them with Projectiles!",
+    icon: "🎯",
+  },
+  { messege: "Keep going, champion! The chicken believes in you.", icon: "📣" },
+  {
+    messege:
+      "You can always take a break... just kidding, the enemies won't stop!",
+    icon: "😈",
+  },
+  {
+    messege: "Why did the chicken cross the Cosmic Arena? To watch you fight!",
+    icon: "🛣️",
+  },
+  {
+    messege: "Just a headsup, Using shield will not save ypu from projectiles",
+    icon: "🛡️",
+  },
+  { messege: "Press 1, 2, 3 or Q, F, R keys for special powers", icon: "🦹‍♀️" },
+  { messege: "Press O to open sound settings ", icon: "🔊" },
 ];
 // const BASE_PROJECTILE_DAMAGE = 200;
 
@@ -481,6 +503,7 @@ export default function CosmicChickenRhapsody() {
     },
     []
   );
+
   useEffect(() => {
     if (canvasRef.current && containerRef.current) {
       const canvas = canvasRef.current;
@@ -608,6 +631,25 @@ export default function CosmicChickenRhapsody() {
       direction: number = 0
     ) => {
       if (particleSystemRef.current && canvasRef.current) {
+        switch (color) {
+          case "red":
+            soundManager.playSound("explosion");
+            break;
+          case "orange":
+            soundManager.playSound("hit");
+            break;
+          case "yellow":
+            soundManager.playSound("shoot");
+            break;
+          case "blue":
+            soundManager.playSound("powerup");
+            break;
+          case "gray":
+            soundManager.playSound("hit");
+            break;
+          default:
+            break;
+        }
         // Create temporary canvas for color conversion
         const tempCanvas = document.createElement("canvas");
         const ctx = tempCanvas.getContext("2d")!;
@@ -727,6 +769,7 @@ export default function CosmicChickenRhapsody() {
                 Math.PI / 1,
                 7
               );
+              soundManager.playSound("explosion");
               setGameState((prevState) => ({
                 ...prevState,
                 score: prevState.score + 100 * prevState.combo,
@@ -935,7 +978,7 @@ export default function CosmicChickenRhapsody() {
 
     // Limit for stats increase
     const MAX_WAVE_MULTIPLIER = 5; // Maximum multiplier for enemy stats
-    const MAX_HEALTH = 5000; // Maximum health value
+    const MAX_HEALTH = 15000; // Maximum health value
     const MAX_SPEED = BASE_ENEMY_SPEED + 2.0; // Maximum speed value
     const MAX_SIZE = BASE_ENEMY_SIZE + 5.0; // Maximum size value
 
@@ -1156,6 +1199,18 @@ export default function CosmicChickenRhapsody() {
 
     return { ...boss, position: { x: newX, y: newY } };
   };
+
+  useEffect(() => {
+    soundManager.loadSound("shoot", "/sounds/shoot.mp3");
+    soundManager.loadSound("hit", "/sounds/hit.mp3");
+    soundManager.loadSound("explosion", "/sounds/explosion.mp3");
+    soundManager.loadSound("powerup", "/sounds/powerup.mp3");
+    soundManager.loadSound("bgm", "/sounds/bgm.mp3");
+
+    if (tutorialShown == true) {
+      soundManager.playBGM("bgm");
+    }
+  }, [gameStarted, restartGame, tutorialShown]);
   useEffect(() => {
     if (gameState.gameOver || !gameStarted || isPaused) return;
     if (gameState.score > highScore) {
@@ -1309,6 +1364,7 @@ export default function CosmicChickenRhapsody() {
                     "red",
                     20
                   );
+                  soundManager.playSound("explosion");
                   setGameState((prev) => ({
                     ...prev,
                     score:
@@ -1790,6 +1846,7 @@ export default function CosmicChickenRhapsody() {
     canAttack,
     attackCooldown,
   ]);
+
   // const [isPaused, setIsPaused] = useState(false);
   const startGame = useCallback(() => {
     setShowTutorial(false);
@@ -2280,29 +2337,13 @@ export default function CosmicChickenRhapsody() {
             <div>WASD or Arrow keys to move</div>
             <div>Space or E to attack</div>
             <div>Shift key to shoot</div>
-
+            <div>Press O to open sound settings</div>
             <div>1, 2, 3 or Q, F, R keys for special powers</div>
             <div>P to pause/resume the game</div>
+            <SoundSettings soundManager={soundManager} />
             <Button
               className=" z-50 bg-blue-300/50"
               onClick={() => setTutorialShown(false)}
-            >
-              Tutorial
-            </Button>
-            <Button
-              className="z-50 bg-blue-300/50"
-              onClick={() =>
-                toast("Hello world!", {
-                  style: {
-                    background: "#0a0a0a", // Dark background for toast
-                    color: "#e7ce5a", // Text color
-                    borderRadius: "8px",
-                    border: "1px solid #e7ce5a", // Updated border with width and color
-                    padding: "12px",
-                  },
-                  icon: "👍", // Optional icon
-                })
-              }
             >
               Tutorial
             </Button>
