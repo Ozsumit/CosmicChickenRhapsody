@@ -380,8 +380,8 @@ const tips = [
 export default function CosmicChickenRhapsody() {
   // Fetch coins from localStorage on component mount
 
-  localStorage.setItem("ATTACKDAMAGE", JSON.stringify(ATTACK_DAMAGE.NORMAL));
-  localStorage.setItem("PLAYERSPEED", JSON.stringify(BASE_PLAYER_SPEED));
+  // localStorage.setItem("ATTACKDAMAGE", JSON.stringify(ATTACK_DAMAGE.NORMAL));
+  // localStorage.setItem("PLAYERSPEED", JSON.stringify(BASE_PLAYER_SPEED));
 
   const [playerStats, setPlayerStats] =
     useState<PlayerStats>(BASE_PLAYER_STATS);
@@ -416,6 +416,7 @@ export default function CosmicChickenRhapsody() {
       type: "HEART" | "STAR" | "COINS";
     }>
   >([]);
+
   useEffect(() => {
     // Read values from localStorage only on client-side
     const savedHighScore = parseInt(
@@ -633,23 +634,26 @@ export default function CosmicChickenRhapsody() {
       if (particleSystemRef.current && canvasRef.current) {
         switch (color) {
           case "red":
-            soundManager.playSound("explosion");
+            if (soundManager) soundManager.playSound("explosion");
             break;
+
           case "orange":
-            soundManager.playSound("hit");
+            if (soundManager) soundManager.playSound("hit");
             break;
+
           case "yellow":
-            soundManager.playSound("shoot");
+            if (soundManager) soundManager.playSound("shoot");
             break;
+
           case "blue":
-            soundManager.playSound("powerup");
+            if (soundManager) soundManager.playSound("powerup");
             break;
+
           case "gray":
-            soundManager.playSound("hit");
-            break;
-          default:
+            if (soundManager) soundManager.playSound("hit");
             break;
         }
+
         // Create temporary canvas for color conversion
         const tempCanvas = document.createElement("canvas");
         const ctx = tempCanvas.getContext("2d")!;
@@ -769,7 +773,9 @@ export default function CosmicChickenRhapsody() {
                 Math.PI / 1,
                 7
               );
-              soundManager.playSound("explosion");
+              if (soundManager) {
+                soundManager.playSound("explosion");
+              }
               setGameState((prevState) => ({
                 ...prevState,
                 score: prevState.score + 100 * prevState.combo,
@@ -1201,16 +1207,19 @@ export default function CosmicChickenRhapsody() {
   };
 
   useEffect(() => {
-    soundManager.loadSound("shoot", "/sounds/shoot.mp3");
-    soundManager.loadSound("hit", "/sounds/hit.mp3");
-    soundManager.loadSound("explosion", "/sounds/explosion.mp3");
-    soundManager.loadSound("powerup", "/sounds/powerup.mp3");
-    soundManager.loadSound("bgm", "/sounds/bgm.mp3");
+    if (soundManager) {
+      soundManager.loadSound("shoot", "/sounds/shoot.mp3");
+      soundManager.loadSound("hit", "/sounds/hit.mp3");
+      soundManager.loadSound("explosion", "/sounds/explosion.mp3");
+      soundManager.loadSound("powerup", "/sounds/powerup.mp3");
+      soundManager.loadSound("bgm", "/sounds/bgm.mp3");
 
-    if (tutorialShown == true) {
-      soundManager.playBGM("bgm");
+      if (tutorialShown === true) {
+        soundManager.playBGM("bgm");
+      }
     }
-  }, [gameStarted, restartGame, tutorialShown]);
+  }, [tutorialShown]); // Dependency array ensures effect runs when `tutorialShown` changes
+
   useEffect(() => {
     if (gameState.gameOver || !gameStarted || isPaused) return;
     if (gameState.score > highScore) {
@@ -1364,7 +1373,9 @@ export default function CosmicChickenRhapsody() {
                     "red",
                     20
                   );
-                  soundManager.playSound("explosion");
+                  if (soundManager) {
+                    soundManager.playSound("explosion");
+                  }
                   setGameState((prev) => ({
                     ...prev,
                     score:
@@ -2340,7 +2351,7 @@ export default function CosmicChickenRhapsody() {
             <div>Press O to open sound settings</div>
             <div>1, 2, 3 or Q, F, R keys for special powers</div>
             <div>P to pause/resume the game</div>
-            <SoundSettings soundManager={soundManager} />
+            {soundManager && <SoundSettings soundManager={soundManager} />}
             <Button
               className=" z-50 bg-blue-300/50"
               onClick={() => setTutorialShown(false)}
