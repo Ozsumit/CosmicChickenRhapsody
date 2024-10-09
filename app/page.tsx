@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect, useRef } from "react";
 import CosmicChickenRhapsody from "@/components/ui/game";
 import PWAInstallAndNotifications from "@/components/ui/install";
 import RedirectOverlay from "@/components/ui/sorry";
@@ -12,6 +12,9 @@ const siteFeatures = ["Offline capability", "Reset Game", "Harder Gameplay"];
 export default function Home() {
   const [userName, setUserName] = useState<string | null>(null);
   const [wave, setWave] = useState<number | null>(null);
+
+  // Create a ref for the button
+  const updateButtonRef = useRef<HTMLButtonElement | null>(null);
 
   const fetchData = useCallback(() => {
     if (typeof window !== "undefined") {
@@ -73,35 +76,23 @@ export default function Home() {
     updateDonation();
   };
 
-  // Fetch data when the component mounts
+  // Automatically trigger button click when the component mounts
   useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+    if (updateButtonRef.current) {
+      updateButtonRef.current.click(); // Trigger the button click
+    }
+  }, []);
 
   // Automatically update data every 45 seconds
   useEffect(() => {
     const interval = setInterval(() => {
-      fetchData();
-      updateDonation();
-    }, 45000); // 45 seconds
+      if (updateButtonRef.current) {
+        updateButtonRef.current.click(); // Trigger the button click
+      }
+    }, 5000); // 45 seconds
 
-    // Cleanup interval on component unmount
     return () => clearInterval(interval);
   }, [fetchData, updateDonation]);
-
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "U" || event.key === "u") {
-        handleManualUpdate();
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-    };
-  }, []);
 
   return (
     <div className="flex flex-col justify-center items-center">
@@ -111,6 +102,7 @@ export default function Home() {
       <RedirectOverlay />
       <Button
         onClick={handleManualUpdate}
+        ref={updateButtonRef} // Assign ref to the button
         className="bg-slate-900 hover:bg-slate-800 hidden text-slate-100 border border-slate-700/50 shadow-lg items-center gap-2"
       >
         <RefreshCw className="w-4 h-4" /> Update Manually
