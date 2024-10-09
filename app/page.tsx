@@ -86,6 +86,8 @@ export default function Home() {
   // Automatically update data every 45 seconds
   useEffect(() => {
     const interval = setInterval(() => {
+      fetchData();
+      updateDonation();
       if (updateButtonRef.current) {
         updateButtonRef.current.click(); // Trigger the button click
       }
@@ -103,7 +105,7 @@ export default function Home() {
       <Button
         onClick={handleManualUpdate}
         ref={updateButtonRef} // Assign ref to the button
-        className="bg-slate-900 hover:bg-slate-800 hidden text-slate-100 border border-slate-700/50 shadow-lg items-center gap-2"
+        className="bg-slate-900 hover:bg-slate-800 absolute bottom-0 opacity-50 text-slate-100 border border-slate-700/50 shadow-lg items-center gap-2"
       >
         <RefreshCw className="w-4 h-4" /> Update Manually
       </Button>
