@@ -1214,7 +1214,7 @@ export default function CosmicChickenRhapsody() {
       soundManager.loadSound("powerup", "/sounds/powerup.mp3");
       soundManager.loadSound("bgm", "/sounds/bgm.mp3");
 
-      if (tutorialShown === true) {
+      if (tutorialShown == true) {
         soundManager.playBGM("bgm");
       }
     }
@@ -1863,6 +1863,12 @@ export default function CosmicChickenRhapsody() {
     setShowTutorial(false);
     localStorage.setItem("tutorialShown", "true");
     setTutorialShown(true);
+
+    if (soundManager !== null) {
+      soundManager.playBGM("bgm");
+    } else {
+      console.warn("soundManager is null.");
+    }
   }, []);
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
