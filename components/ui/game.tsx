@@ -374,6 +374,7 @@ const tips = [
   },
   { messege: "Press 1, 2, 3 or Q, F, R keys for special powers", icon: "🦹‍♀️" },
   { messege: "Press O to open sound settings ", icon: "🔊" },
+  { messege: "Press M to toggle Mute  ", icon: "🔇" },
 ];
 // const BASE_PROJECTILE_DAMAGE = 200;
 
@@ -1508,7 +1509,7 @@ export default function CosmicChickenRhapsody() {
           if (powerUp.type === "HEART") {
             setGameState((prev) => ({
               ...prev,
-              hearts: Math.min(prev.hearts + 1, 5),
+              hearts: Math.min(prev.hearts + 1, 10),
             }));
             createParticles(powerUp.position.x, powerUp.position.y, "red", 10);
           } else if (powerUp.type === "STAR") {
@@ -1864,11 +1865,9 @@ export default function CosmicChickenRhapsody() {
     localStorage.setItem("tutorialShown", "true");
     setTutorialShown(true);
 
-    if (soundManager !== null) {
-      soundManager.playBGM("bgm");
-    } else {
-      console.warn("soundManager is null.");
-    }
+    // if (soundManager !== null) {
+    //   soundManager.playBGM("bgm");
+    // }
   }, []);
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -2093,7 +2092,7 @@ export default function CosmicChickenRhapsody() {
             {/* Enemies */}
             <div className="absolute bottom-16 left-4 flex flex-col space-y-2">
               {/* Attack Cooldown Bar */}
-              <div className="relative w-32 h-2 bg-gray-700 rounded-full overflow-hidden">
+              <div className="relative w-32 z-50 h-2 bg-gray-700 rounded-full overflow-hidden">
                 <div
                   className="h-full bg-red-500 rounded-full transition-all duration-200 ease-out"
                   style={{
@@ -2106,7 +2105,7 @@ export default function CosmicChickenRhapsody() {
               </div>
 
               {/* Projectile Reload Bar */}
-              <div className="relative w-32 h-4 bg-gray-300 rounded-full overflow-hidden">
+              <div className="relative w-32 z-50 h-4 bg-gray-300 rounded-full overflow-hidden">
                 <div
                   className="h-full bg-yellow-400 transition-all duration-100 ease-linear"
                   style={{ width: `${projectileReloadProgress}%` }}
@@ -2322,7 +2321,7 @@ export default function CosmicChickenRhapsody() {
           ))}
           {/* Render bosses */}
           {/* Controls guide */}
-          <div className="absolute bottom-4 right-4 text-white text-sm opacity-50">
+          <div className="absolute bottom-4 right-4 z-[51] text-white text-sm opacity-50">
             <div className="flex flex-col top-4 right-4   rounded-xl w-max p-2 text-white bg-gray-700/85 text-sm">
               <div>
                 Attack: +
@@ -2353,8 +2352,9 @@ export default function CosmicChickenRhapsody() {
             </div>
             <div>WASD or Arrow keys to move</div>
             <div>Space or E to attack</div>
-            <div>Shift key to shoot</div>
+            <div>Shift or X key to shoot</div>
             <div>Press O to open sound settings</div>
+            <div>Press M to Toggle mute</div>
             <div>1, 2, 3 or Q, F, R keys for special powers</div>
             <div>P to pause/resume the game</div>
             {soundManager && <SoundSettings soundManager={soundManager} />}

@@ -9,6 +9,7 @@ import {
   DialogTitle,
   // DialogTrigger,
 } from "./dialog";
+
 interface SoundSettingsProps {
   soundManager: {
     setBGMVolume: (volume: number) => void;
@@ -22,11 +23,16 @@ const SoundSettings: React.FC<SoundSettingsProps> = ({ soundManager }) => {
   const [sfxVolume, setSfxVolume] = useState(0.5);
   const [isMuted, setIsMuted] = useState(false);
 
-  // Function to handle opening/closing with the "S" key
+  // Function to handle opening/closing with the "O" key
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "O" || event.key === "o") {
-        setIsOpen((prev) => !prev); // Toggle open/close with "S"
+        setIsOpen((prev) => !prev); // Toggle open/close with "O"
+      }
+
+      // Toggle mute with the "M" key
+      if (event.key === "M" || event.key === "m") {
+        toggleMute(); // Toggle mute/unmute
       }
     };
 
@@ -47,7 +53,7 @@ const SoundSettings: React.FC<SoundSettingsProps> = ({ soundManager }) => {
   }, [bgmVolume, sfxVolume, isMuted, soundManager]);
 
   const toggleMute = () => {
-    setIsMuted(!isMuted);
+    setIsMuted((prev) => !prev);
   };
 
   return (
@@ -93,7 +99,9 @@ const SoundSettings: React.FC<SoundSettingsProps> = ({ soundManager }) => {
           </Button>
         </DialogContent>
       </Dialog>
-      {/* <Button onClick={() => setIsOpen(true)}>Open Sound Settings</Button> */}
+      {/* <Button onClick={() => setIsOpen(true)} className="text-white">
+        Open Sound Settings
+      </Button> */}
     </div>
   );
 };
