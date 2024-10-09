@@ -30,14 +30,19 @@ const TopDonorsComponent: React.FC<{ onClose: () => void }> = ({ onClose }) => {
       const response = await fetch("/api/leaderboard");
       if (!response.ok) {
         const errorText = await response.text();
-        console.error("API Error:", response.status, errorText);
-        throw new Error(`Failed to fetch top donors: ${response.status} ${errorText}`);
+        console.log("API Error:", response.status, errorText);
+        throw new Error(
+          `Failed to fetch top donors: ${response.status} ${errorText}`
+        );
       }
       const data = await response.json();
       setTopDonors(data);
     } catch (err) {
+      console.log(err);
       console.error("Fetch error:", err);
-      setError(err instanceof Error ? err.message : "An unknown error occurred");
+      setError(
+        err instanceof Error ? err.message : "An unknown error occurred"
+      );
     } finally {
       setRefreshing(false);
       setIsLoading(false);
@@ -81,7 +86,11 @@ const TopDonorsComponent: React.FC<{ onClose: () => void }> = ({ onClose }) => {
             <RefreshCw className="w-8 h-8 text-blue-400 animate-spin" />
           </div>
         ) : error ? (
-          <Alert variant="warning" message="" className="bg-red-950/50 border-red-900">
+          <Alert
+            variant="warning"
+            message=""
+            className="bg-red-950/50 border-red-900"
+          >
             <AlertDescription>{error}</AlertDescription>
           </Alert>
         ) : (
