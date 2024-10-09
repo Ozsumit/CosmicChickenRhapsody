@@ -8,7 +8,9 @@ import { soundManager } from "./sound-manager";
 import { Button } from "./buttonmsp";
 import { useHighestWave } from "@/components/ui/highestwavw";
 import SoundSettings from "./tuner";
-import SidebarWrapper from "./leaderboard";
+import LeaderboardSidebar from "./leaderboard";
+// import SidebarWrapper from "./leaderboard";
+// import TopDonorsComponent from "./leaderboard";
 // import { randomInt } from "crypto";
 // import toast, { ToastBar } from "react-hot-toast";
 // import { Toaster } from "./sonner";
@@ -379,7 +381,7 @@ const tips = [
   { messege: "Press M to toggle Mute  ", icon: "🔇" },
 ];
 // const BASE_PROJECTILE_DAMAGE = 200;
-
+// let animationFrameId: number;
 export default function CosmicChickenRhapsody() {
   // Fetch coins from localStorage on component mount
   const { highestWave, updateHighestWave } = useHighestWave();
@@ -1427,7 +1429,6 @@ export default function CosmicChickenRhapsody() {
             })
             .filter(Boolean) as Enemy[]
       );
-
       const playerHit = projectiles.some((projectile) => {
         if (projectile.source === "player") return false; // Player's own projectiles can't hurt them
 
@@ -1437,13 +1438,17 @@ export default function CosmicChickenRhapsody() {
           Math.sqrt(dx * dx + dy * dy) < (PLAYER_SIZE + projectile.size) / 2
         );
       });
+      const hasYolkShield = activePowerUps.some(
+        (p) => p.type === "YOLK_SHIELD"
+      );
 
-      if (playerHit && !isInvulnerable) {
+      if (playerHit && !isInvulnerable && !hasYolkShield) {
         setGameState((prev) => ({
           ...prev,
           hearts: prev.hearts - 1,
           gameOver: prev.hearts <= 1,
         }));
+
         createParticles(
           playerState.position.x,
           playerState.position.y,
@@ -1754,25 +1759,52 @@ export default function CosmicChickenRhapsody() {
             playerDx * playerDx + playerDy * playerDy
           );
 
+          const hasYolkShield = activePowerUps.some(
+            (p) => p.type === "YOLK_SHIELD"
+          );
+
           if (
             playerDistance < (PLAYER_SIZE + projectile.size) / 2 &&
             !isInvulnerable
           ) {
-            setGameState((prev) => ({
-              ...prev,
-              hearts: prev.hearts - 1,
-              gameOver: prev.hearts <= 1,
-            }));
-            createParticles(
-              playerState.position.x,
-              playerState.position.y,
-              "red",
-              20,
-              4
-            );
-            setIsInvulnerable(true);
-            setTimeout(() => setIsInvulnerable(false), 2000);
-            return false;
+            if (!hasYolkShield) {
+              setGameState((prev) => ({
+                ...prev,
+                hearts: prev.hearts - 1,
+                gameOver: prev.hearts <= 1,
+              }));
+              createParticles(
+                playerState.position.x,
+                playerState.position.y,
+                "red",
+                20,
+                4
+              );
+              setIsInvulnerable(true);
+              setTimeout(() => setIsInvulnerable(false), 2000);
+              return false;
+            } else {
+              // Reflect the projectile
+              const reflectionAngle = Math.atan2(playerDy, playerDx);
+              const reflectedVelocity = {
+                x: Math.cos(reflectionAngle) * projectile.velocity.x * 1.5,
+                y: Math.sin(reflectionAngle) * projectile.velocity.y * 1.5,
+              };
+
+              createParticles(
+                projectile.position.x,
+                projectile.position.y,
+                "blue",
+                10,
+                3
+              );
+
+              // Update the projectile
+              projectile.velocity = reflectedVelocity;
+              projectile.source = "player"; // Change source to player so it can now hurt enemies
+
+              return true; // Keep the reflected projectile
+            }
           }
 
           return true;
@@ -1783,13 +1815,13 @@ export default function CosmicChickenRhapsody() {
           // 2% chance to shoot each frame
           spawnBossProjectile(enemy.position, 3, 10);
         }
-        if (enemy.type === "Boss2" && Math.random() < 0.08) {
+        if (enemy.type === "Boss2" && Math.random() < 0.06) {
           // 8% chance to shoot each frame
-          spawnBossProjectile(enemy.position, 4, 10);
+          spawnBossProjectile(enemy.position, 4, 7);
         }
         if (enemy.type === "Boss3" && Math.random() < 0.1) {
           // 10% chance to shoot each frame
-          spawnBossProjectile(enemy.position, 5, 12);
+          spawnBossProjectile(enemy.position, 4, 8);
         }
       });
       if (!isInvulnerable) {
@@ -2348,7 +2380,7 @@ export default function CosmicChickenRhapsody() {
             </div>
           ))}
           {/* Render bosses */}
-          <SidebarWrapper />
+          <LeaderboardSidebar />
           {/* Controls guide */}
           <div className="absolute bottom-4 right-4 z-[51] text-white text-sm opacity-50">
             <div className="flex items-center bg-gray-700/85 p-3 mb-2 rounded-xl shadow-lg w-max">
