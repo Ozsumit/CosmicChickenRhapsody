@@ -7,6 +7,7 @@ import { toast } from "react-hot-toast";
 import { soundManager } from "./sound-manager";
 import { Button } from "./buttonmsp";
 import SoundSettings from "./tuner";
+import SidebarWrapper from "./leaderboard";
 // import { randomInt } from "crypto";
 // import toast, { ToastBar } from "react-hot-toast";
 // import { Toaster } from "./sonner";
@@ -381,6 +382,15 @@ const tips = [
 export default function CosmicChickenRhapsody() {
   // Fetch coins from localStorage on component mount
 
+  const [userName, setUserName] = useState<string | null>("");
+
+  useEffect(() => {
+    const storedUserName = localStorage.getItem("userName");
+    if (storedUserName) {
+      setUserName(storedUserName);
+    }
+  }, []);
+
   // localStorage.setItem("ATTACKDAMAGE", JSON.stringify(ATTACK_DAMAGE.NORMAL));
   // localStorage.setItem("PLAYERSPEED", JSON.stringify(BASE_PLAYER_SPEED));
 
@@ -707,9 +717,9 @@ export default function CosmicChickenRhapsody() {
   };
   const AttackIndicator = ({ type }: { type: AttackType }) => {
     const colors = {
-      NORMAL: "bg-blue-500/50",
-      FEATHER_FURY: "bg-yellow-500/50",
-      CLUCKINATOR: "bg-red-500/50",
+      NORMAL: "bg-blue-500/50 z-50",
+      FEATHER_FURY: "bg-yellow-500/50 z-50",
+      CLUCKINATOR: "bg-red-500/50 z-50",
     };
 
     return (
@@ -2320,9 +2330,15 @@ export default function CosmicChickenRhapsody() {
             </div>
           ))}
           {/* Render bosses */}
+          <SidebarWrapper />
           {/* Controls guide */}
           <div className="absolute bottom-4 right-4 z-[51] text-white text-sm opacity-50">
-            <div className="flex flex-col top-4 right-4   rounded-xl w-max p-2 text-white bg-gray-700/85 text-sm">
+            <div className="flex items-center bg-gray-700/85 p-3 mb-2 rounded-xl shadow-lg w-max">
+              <div className="text-lg font-semibold text-amber-400">
+                {userName ? `Welcome, ${userName}` : "Welcome, Player"}
+              </div>
+            </div>
+            <div className="flex flex-col top-4 right-4   rounded-xl w-max p-2 mb-2 text-white bg-gray-700/85 text-sm">
               <div>
                 Attack: +
                 {Math.round(
@@ -2357,6 +2373,8 @@ export default function CosmicChickenRhapsody() {
             <div>Press M to Toggle mute</div>
             <div>1, 2, 3 or Q, F, R keys for special powers</div>
             <div>P to pause/resume the game</div>
+            <div>Press u to update leaderboards </div>
+            <div>Press L to Open leaderboards </div>
             {soundManager && <SoundSettings soundManager={soundManager} />}
             <Button
               className=" z-50 bg-blue-300/50"
