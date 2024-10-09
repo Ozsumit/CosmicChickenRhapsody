@@ -81,7 +81,7 @@ const TopDonorsComponent: React.FC<{ onClose: () => void }> = ({ onClose }) => {
             <RefreshCw className="w-8 h-8 text-blue-400 animate-spin" />
           </div>
         ) : error ? (
-          <Alert variant="warning" className="bg-red-950/50 border-red-900">
+          <Alert variant="warning" messege="" className="bg-red-950/50 border-red-900">
             <AlertDescription>{error}</AlertDescription>
           </Alert>
         ) : (
