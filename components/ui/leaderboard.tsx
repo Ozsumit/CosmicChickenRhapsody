@@ -28,9 +28,16 @@ const TopDonorsComponent: React.FC<{ onClose: () => void }> = ({ onClose }) => {
     setError(null);
     try {
       const response = await fetch("/api/leaderboard");
-      if (!response.ok) throw new Error("Failed to fetch top donors");
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("API Error:", response.status, errorText);
+        throw new Error(`Failed to fetch top donors: ${response.status} ${errorText}`);
+      }
       const data = await response.json();
       setTopDonors(data);
+    } catch (err) {
+      console.error("Fetch error:", err);
+      setError(err instanceof Error ? err.message : "An unknown error occurred");
     } finally {
       setRefreshing(false);
       setIsLoading(false);
