@@ -381,6 +381,24 @@ const tips = [
 
 export default function CosmicChickenRhapsody() {
   // Fetch coins from localStorage on component mount
+  const [highestWave, setHighestWave] = useState(0);
+
+  useEffect(() => {
+    // Read values from localStorage only on client-side
+    const savedHighScore = parseInt(
+      localStorage.getItem("highScore") || "0",
+      10
+    );
+    const savedTutorialShown = localStorage.getItem("tutorialShown") === "true";
+    const savedHighestWave = parseInt(
+      localStorage.getItem("highestWave") || "0",
+      10
+    );
+
+    setHighScore(savedHighScore);
+    setTutorialShown(savedTutorialShown);
+    setHighestWave(savedHighestWave);
+  }, []);
 
   const [userName, setUserName] = useState<string | null>("");
 
@@ -1237,6 +1255,10 @@ export default function CosmicChickenRhapsody() {
       setHighScore(gameState.score);
       localStorage.setItem("highScore", gameState.score.toString());
     }
+    if (gameState.wave > highestWave) {
+      setHighestWave(gameState.wave);
+      localStorage.setItem("highestWave", gameState.wave.toString());
+    }
     // const findClosestEnemy = () => {
     //   return enemies.reduce(
     //     (closest, enemy) => {
@@ -1857,9 +1879,10 @@ export default function CosmicChickenRhapsody() {
     isInvulnerable,
     gameState.score,
     highScore,
+    gameState.wave,
     createParticles,
     projectileDamage, // Add projectileDamage to the dependency array
-
+    highestWave,
     enemies,
     attack,
     GAME_WIDTH,
