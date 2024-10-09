@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { Trophy, Zap, Heart, Sword, Star, CoinsIcon } from "lucide-react";
+import { Trophy, Zap, Heart, Sword, Star, Stars } from "lucide-react";
 import Image from "next/image";
 import GameTutorial from "../gametuto";
 import { toast } from "react-hot-toast";
@@ -1120,7 +1120,7 @@ export default function CosmicChickenRhapsody() {
           transform: "translate(-50%, -50%)",
         }}
       >
-        {type === "HEART" ? "+1 ❤️" : "+10 ⭐"}
+        {type === "HEART" ? "+1 ❤️" : type === "COINS" ? "+15 ⭐" : "+10 ⭐"}
       </div>
     );
   };
@@ -1445,7 +1445,7 @@ export default function CosmicChickenRhapsody() {
       if (playerHit && !isInvulnerable && !hasYolkShield) {
         setGameState((prev) => ({
           ...prev,
-          hearts: prev.hearts - 1,
+          hearts: prev.hearts - 0.5,
           gameOver: prev.hearts <= 1,
         }));
 
@@ -1541,7 +1541,7 @@ export default function CosmicChickenRhapsody() {
           if (powerUp.type === "HEART") {
             setGameState((prev) => ({
               ...prev,
-              hearts: Math.min(prev.hearts + 1, 10),
+              hearts: Math.min(prev.hearts + 0.5, 10),
             }));
             createParticles(powerUp.position.x, powerUp.position.y, "red", 10);
           } else if (powerUp.type === "STAR") {
@@ -1557,7 +1557,7 @@ export default function CosmicChickenRhapsody() {
             );
           } else if (powerUp.type === "COINS") {
             setGameState((prev) => {
-              const newCoins = prev.coins + 10;
+              const newCoins = prev.stars + 15;
               localStorage.setItem("coins", newCoins.toString());
               return {
                 ...prev,
@@ -1770,7 +1770,7 @@ export default function CosmicChickenRhapsody() {
             if (!hasYolkShield) {
               setGameState((prev) => ({
                 ...prev,
-                hearts: prev.hearts - 1,
+                hearts: prev.hearts - 0.5,
                 gameOver: prev.hearts <= 1,
               }));
               createParticles(
@@ -1836,7 +1836,7 @@ export default function CosmicChickenRhapsody() {
         if (playerHit) {
           setGameState((prev) => ({
             ...prev,
-            hearts: prev.hearts - 1,
+            hearts: prev.hearts - 0.5,
             gameOver: prev.hearts <= 1,
           }));
           createParticles(
@@ -2289,7 +2289,7 @@ export default function CosmicChickenRhapsody() {
                 ) : powerUp.type === "STAR" ? (
                   <Star className="w-full h-full text-yellow-500 animate-bounce" />
                 ) : powerUp.type === "COINS" ? (
-                  <CoinsIcon className="w-full h-full text-green-500 animate-bounce" />
+                  <Stars className="w-full h-full text-green-500 animate-bounce" />
                 ) : null}
               </div>
             ))}
