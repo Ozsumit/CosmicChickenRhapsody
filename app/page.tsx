@@ -6,7 +6,6 @@ import RedirectOverlay from "@/components/ui/sorry";
 import Welcome from "@/components/ui/welcome";
 import { Button } from "@/components/ui/buttonmsp";
 import { RefreshCw } from "lucide-react";
-// import SidebarWrapper from "@/components/ui/leaderboard";
 
 const siteFeatures = ["Offline capability", "Reset Game", "Harder Gameplay"];
 
@@ -45,7 +44,6 @@ export default function Home() {
     if (userName && wave !== null) {
       try {
         const response = await fetch("/api/data", {
-          // Correct path to API
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -79,21 +77,32 @@ export default function Home() {
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  // Automatically update data every 45 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchData();
+      updateDonation();
+    }, 45000); // 45 seconds
+
+    // Cleanup interval on component unmount
+    return () => clearInterval(interval);
+  }, [fetchData, updateDonation]);
+
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      // Toggle mute with the "M" key
       if (event.key === "U" || event.key === "u") {
-        handleManualUpdate(); // Toggle mute/unmute
+        handleManualUpdate();
       }
     };
 
     window.addEventListener("keydown", handleKeyDown);
 
-    // Clean up event listener on unmount
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
   }, []);
+
   return (
     <div className="flex flex-col justify-center items-center">
       <CosmicChickenRhapsody />
@@ -102,7 +111,7 @@ export default function Home() {
       <RedirectOverlay />
       <Button
         onClick={handleManualUpdate}
-        className="bg-slate-900 hover:bg-slate-800 hidden text-slate-100 border border-slate-700/50 shadow-lg  items-center gap-2"
+        className="bg-slate-900 hover:bg-slate-800 hidden text-slate-100 border border-slate-700/50 shadow-lg items-center gap-2"
       >
         <RefreshCw className="w-4 h-4" /> Update Manually
       </Button>
