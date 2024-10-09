@@ -6,6 +6,7 @@ import GameTutorial from "../gametuto";
 import { toast } from "react-hot-toast";
 import { soundManager } from "./sound-manager";
 import { Button } from "./buttonmsp";
+import { useHighestWave } from "@/components/ui/highestwavw";
 import SoundSettings from "./tuner";
 import SidebarWrapper from "./leaderboard";
 // import { randomInt } from "crypto";
@@ -381,8 +382,7 @@ const tips = [
 
 export default function CosmicChickenRhapsody() {
   // Fetch coins from localStorage on component mount
-  const [highestWave, setHighestWave] = useState(0);
-
+  const { highestWave, updateHighestWave } = useHighestWave();
   useEffect(() => {
     // Read values from localStorage only on client-side
     const savedHighScore = parseInt(
@@ -390,14 +390,10 @@ export default function CosmicChickenRhapsody() {
       10
     );
     const savedTutorialShown = localStorage.getItem("tutorialShown") === "true";
-    const savedHighestWave = parseInt(
-      localStorage.getItem("highestWave") || "0",
-      10
-    );
 
     setHighScore(savedHighScore);
     setTutorialShown(savedTutorialShown);
-    setHighestWave(savedHighestWave);
+    // setHighestWave(savedHighestWave);
   }, []);
 
   const [userName, setUserName] = useState<string | null>("");
@@ -1256,8 +1252,7 @@ export default function CosmicChickenRhapsody() {
       localStorage.setItem("highScore", gameState.score.toString());
     }
     if (gameState.wave > highestWave) {
-      setHighestWave(gameState.wave);
-      localStorage.setItem("highestWave", gameState.wave.toString());
+      updateHighestWave(gameState.wave);
     }
     // const findClosestEnemy = () => {
     //   return enemies.reduce(
