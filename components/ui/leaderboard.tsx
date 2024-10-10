@@ -71,8 +71,8 @@ const LeaderboardSidebar: React.FC = () => {
   return (
     <>
       <Button
-        onClick={() => setIsSidebarOpen(true)}
-        className="fixed bottom-4 disabled right-7 opacity-50 bg-blue-300/50 hover:bg-slate-800/50 z-[100] text-slate-100 shadow-lg rounded-md px-4 py-2 flex items-center gap-2"
+        onClick={() => setIsSidebarOpen(false)}
+        className="fixed bottom-4 disabled  right-7 opacity-80 bg-blue-300/50 hover:bg-slate-800/50 z-[-100] text-slate-100 shadow-lg rounded-md px-4 py-2 flex items-center gap-2"
       >
         <LayoutGrid className="w-4 h-4 text-amber-400" />
         <span className="font-medium">Leaderboard (out of order)</span>
