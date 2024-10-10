@@ -21,7 +21,12 @@ const nextConfig = {
       },
     ];
   },
-  // Add other configurations here
+  // Disable static optimization
+  unstable_runtimeJS: true,
+  unstable_JsPreload: false,
+  // Force server-side rendering
+  unstable_useServerComponents: true,
+  // Existing configurations
   reactStrictMode: true,
   swcMinify: true,
 };
