@@ -1,44 +1,50 @@
 "use client";
-// import type { Metadata } from "next";
+
+import { ReactNode, useEffect } from "react";
 import localFont from "next/font/local";
-import "./globals.css";
-import { useEffect } from "react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/sonner";
+import "./globals.css";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
   variable: "--font-geist-sans",
   weight: "100 900",
 });
+
 const geistMono = localFont({
   src: "./fonts/GeistMonoVF.woff",
   variable: "--font-geist-mono",
   weight: "100 900",
 });
 
+// Create a client
+const queryClient = new QueryClient();
+
 export default function RootLayout({
   children,
 }: Readonly<{
-  children: React.ReactNode;
+  children: ReactNode;
 }>) {
   useEffect(() => {
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker
         .register("/sw.js")
-        // .then((reg) => console.log("Service Worker registered"))
         .catch((err) =>
           console.error("Service Worker registration failed", err)
         );
     }
   }, []);
+
   return (
     <html lang="en">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        {" "}
-        <Toaster /> {/* Add Toaster here */}
-        {children}
+        <QueryClientProvider client={queryClient}>
+          <Toaster />
+          {children}
+        </QueryClientProvider>
       </body>
     </html>
   );

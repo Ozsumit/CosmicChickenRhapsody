@@ -7,9 +7,10 @@ import {
   LayoutGrid,
   ArrowLeft,
 } from "lucide-react";
-import { Card, CardContent, CardHeader } from "@/components/ui/cardninput";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/buttonmsp";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useQuery } from "@tanstack/react-query";
 
 interface Donor {
   _id: string;
@@ -17,39 +18,27 @@ interface Donor {
   wave: number;
 }
 
+const fetchTopDonors = async (): Promise<Donor[]> => {
+  const response = await fetch("/api/leaderboard");
+  if (!response.ok) {
+    throw new Error(`Failed to fetch top donors: ${response.status}`);
+  }
+  return response.json();
+};
+
 const LeaderboardSidebar: React.FC = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [topDonors, setTopDonors] = useState<Donor[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [refreshing, setRefreshing] = useState(false);
 
-  const fetchTopDonors = async () => {
-    setRefreshing(true);
-    setError(null);
-    try {
-      const response = await fetch("/api/leaderboard");
-      if (!response.ok) {
-        throw new Error(`Failed to fetch top donors: ${response.status}`);
-      }
-      const data = await response.json();
-      setTopDonors(data);
-    } catch (err) {
-      console.error("Fetch error:", err);
-      setError(
-        err instanceof Error ? err.message : "An unknown error occurred"
-      );
-    } finally {
-      setRefreshing(false);
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    if (isSidebarOpen) {
-      fetchTopDonors();
-    }
-  }, [isSidebarOpen]);
+  const {
+    data: topDonors,
+    isLoading,
+    error,
+    refetch,
+  } = useQuery<Donor[], Error>({
+    queryKey: ["topDonors"],
+    queryFn: fetchTopDonors,
+    enabled: isSidebarOpen, // Only fetch when sidebar is open
+  });
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -123,15 +112,15 @@ const LeaderboardSidebar: React.FC = () => {
               </div>
             ) : error ? (
               <Alert
-                variant="warning"
-                message="error"
+                variant="error"
+                message=""
                 className="bg-red-950/50 border-red-900"
               >
-                <AlertDescription>{error}</AlertDescription>
+                <AlertDescription>{error.message}</AlertDescription>
               </Alert>
             ) : (
               <ul className="space-y-3">
-                {topDonors.map((donor, index) => (
+                {topDonors?.map((donor, index) => (
                   <li
                     key={donor._id}
                     className="group flex items-center justify-between bg-slate-900/50 rounded-lg p-3 transition-all hover:bg-slate-800/50"
@@ -157,13 +146,13 @@ const LeaderboardSidebar: React.FC = () => {
 
           <div className="flex justify-center items-center p-4 border-t border-slate-800">
             <Button
-              onClick={fetchTopDonors}
-              disabled={refreshing}
+              onClick={() => refetch()}
+              disabled={isLoading}
               variant="outline"
               className="w-full bg-slate-900 border-slate-700 text-slate-100 hover:bg-slate-800 hover:text-white"
             >
               <RefreshCw
-                className={`w-4 h-4 mr-2 ${refreshing ? "animate-spin" : ""}`}
+                className={`w-4 h-4 mr-2 ${isLoading ? "animate-spin" : ""}`}
               />
               Refresh Leaderboard
             </Button>
