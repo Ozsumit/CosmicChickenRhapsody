@@ -38,22 +38,22 @@ const LeaderboardSidebar: React.FC = () => {
     }
   };
 
-  useEffect(() => {
-    if (isSidebarOpen) {
-      fetchTopDonors();
-    }
-  }, [isSidebarOpen]);
+//  useEffect(() => {
+//    if (isSidebarOpen) {
+//      fetchTopDonors();
+//    }
+//  }, [isSidebarOpen]);
 
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "L" || event.key === "l") {
-        setIsSidebarOpen((prev) => !prev);
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, []);
+  //*useEffect(() => {
+ //   const handleKeyDown = (event: KeyboardEvent) => {
+  //    if (event.key === "L" || event.key === "l") {
+ //       setIsSidebarOpen((prev) => !prev);
+ //     }
+//    };
+//
+//    window.addEventListener("keydown", handleKeyDown);
+//    return () => window.removeEventListener("keydown", handleKeyDown);
+//  }, []);
 
   const getRankIcon = (index: number) => {
     switch (index) {
@@ -72,10 +72,10 @@ const LeaderboardSidebar: React.FC = () => {
     <>
       <Button
         onClick={() => setIsSidebarOpen(true)}
-        className="fixed bottom-4 right-7 opacity-50 bg-blue-300/50 hover:bg-slate-800/50 z-[100] text-slate-100 shadow-lg rounded-md px-4 py-2 flex items-center gap-2"
+        className="fixed bottom-4 disabled right-7 opacity-50 bg-blue-300/50 hover:bg-slate-800/50 z-[100] text-slate-100 shadow-lg rounded-md px-4 py-2 flex items-center gap-2"
       >
         <LayoutGrid className="w-4 h-4 text-amber-400" />
-        <span className="font-medium">Leaderboard</span>
+        <span className="font-medium">Leaderboard (out of order)</span>
       </Button>
 
       <div
