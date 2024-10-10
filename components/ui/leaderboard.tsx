@@ -1,16 +1,8 @@
 import React, { useState, useEffect } from "react";
-import {
-  Trophy,
-  Medal,
-  RefreshCw,
-  Users,
-  LayoutGrid,
-  ArrowLeft,
-} from "lucide-react";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Trophy, Medal, RefreshCw, Users, LayoutGrid, ArrowLeft } from "lucide-react";
+import { Card, CardContent, CardHeader } from "@/components/ui/cardninput";
 import { Button } from "@/components/ui/buttonmsp";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import useSWR from "swr";
 
 interface Donor {
   _id: string;
@@ -18,34 +10,39 @@ interface Donor {
   wave: number;
 }
 
-interface ApiError {
-  error: string;
-  details: string;
-}
-
-const fetcher = async (url: string) => {
-  const res = await fetch(url);
-  if (!res.ok) {
-    const error: ApiError = await res.json();
-    throw new Error(
-      error.details || "An error occurred while fetching the data."
-    );
-  }
-  return res.json();
-};
-
 const LeaderboardSidebar: React.FC = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [topDonors, setTopDonors] = useState<Donor[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
 
-  const {
-    data: topDonors,
-    error,
-    isValidating,
-    mutate,
-  } = useSWR<Donor[], Error>(
-    isSidebarOpen ? "/api/leaderboard" : null,
-    fetcher
-  );
+  const fetchTopDonors = async () => {
+    setRefreshing(true);
+    setError(null);
+    try {
+      const response = await fetch("/api/leaderboard");
+      if (!response.ok) {
+        throw new Error(`Failed to fetch top donors: ${response.status}`);
+      }
+      const data = await response.json();
+      setTopDonors(data);
+    } catch (err) {
+      console.error("Fetch error:", err);
+      setError(
+        err instanceof Error ? err.message : "An unknown error occurred"
+      );
+    } finally {
+      setRefreshing(false);
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (isSidebarOpen) {
+      fetchTopDonors();
+    }
+  }, [isSidebarOpen]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -113,19 +110,19 @@ const LeaderboardSidebar: React.FC = () => {
           </CardHeader>
 
           <CardContent className="p-4 flex-grow overflow-y-auto">
-            {isValidating ? (
+            {isLoading ? (
               <div className="flex justify-center items-center h-full">
                 <RefreshCw className="w-8 h-8 text-blue-400 animate-spin" />
               </div>
             ) : error ? (
               <Alert
-              message=""
-                variant="error"
+                variant="warning"
+                message="error"
                 className="bg-red-950/50 border-red-900"
               >
-                <AlertDescription>{error.message}</AlertDescription>
+                <AlertDescription>{error}</AlertDescription>
               </Alert>
-            ) : topDonors && topDonors.length > 0 ? (
+            ) : Array.isArray(topDonors) && topDonors.length > 0 ? (
               <ul className="space-y-3">
                 {topDonors.map((donor, index) => (
                   <li
@@ -141,29 +138,25 @@ const LeaderboardSidebar: React.FC = () => {
                       </span>
                     </div>
                     <div className="flex items-center gap-2 text-amber-400">
-                      <span className="font-mono font-medium">
-                        {donor.wave}
-                      </span>
+                      <span className="font-mono font-medium">{donor.wave}</span>
                     </div>
                   </li>
                 ))}
               </ul>
             ) : (
-              <p className="text-center text-slate-400">
-                No leaderboard data available
-              </p>
+              <p className="text-slate-100">No donors available</p>
             )}
           </CardContent>
 
           <div className="flex justify-center items-center p-4 border-t border-slate-800">
             <Button
-              onClick={() => mutate()}
-              disabled={isValidating}
+              onClick={fetchTopDonors}
+              disabled={refreshing}
               variant="outline"
               className="w-full bg-slate-900 border-slate-700 text-slate-100 hover:bg-slate-800 hover:text-white"
             >
               <RefreshCw
-                className={`w-4 h-4 mr-2 ${isValidating ? "animate-spin" : ""}`}
+                className={`w-4 h-4 mr-2 ${refreshing ? "animate-spin" : ""}`}
               />
               Refresh Leaderboard
             </Button>

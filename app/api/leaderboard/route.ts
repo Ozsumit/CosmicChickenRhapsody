@@ -1,11 +1,22 @@
 import { NextResponse } from "next/server";
-import clientPromise from "@/utils/mongodb";
 import { MongoClient } from "mongodb";
 
+const uri = process.env.MONGODB_URI;
+const dbName = "test";
+
+if (!uri) {
+  throw new Error("Please define the MONGODB_URI environment variable");
+}
+
 export async function GET() {
+  let client: MongoClient | null = null;
   try {
-    const client: MongoClient = await clientPromise;
-    const db = client.db("test");
+    console.log("Attempting to connect to MongoDB...");
+    client = await MongoClient.connect(uri!);
+    console.log("Connected successfully to MongoDB");
+
+    const db = client.db(dbName);
+    console.log("Accessing database:", dbName);
 
     console.log("Querying leaderboards collection...");
     const topDonors = await db
@@ -29,5 +40,10 @@ export async function GET() {
       },
       { status: 500 }
     );
+  } finally {
+    if (client) {
+      await client.close();
+      console.log("MongoDB connection closed");
+    }
   }
 }
